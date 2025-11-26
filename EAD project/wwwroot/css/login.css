@@ -1,0 +1,308 @@
+﻿* {
+    box-sizing: border-box;
+}
+
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    overflow-x: hidden;
+}
+
+.main-wrapper {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* Left Side - Branding */
+.branding-side {
+    flex: 1.5;
+    background: url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') no-repeat center center;
+    background-size: cover;
+    background-position: center center;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    min-height: 100vh;
+}
+
+.branding-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(21, 87, 36, 0.85);
+}
+
+.branding-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 2rem;
+}
+
+    .branding-content h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .branding-content p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+
+/* Right Side - Form */
+.login-side {
+    flex: 1;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+.login-box {
+    width: 100%;
+    max-width: 380px;
+    padding: 2.5rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.08);
+}
+
+.login-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+    .login-header h2 {
+        color: #198754;
+        font-weight: 800;
+        font-size: 1.8rem;
+        letter-spacing: -0.5px;
+    }
+
+    .login-header p {
+        font-size: 0.9rem;
+    }
+
+.form-control {
+    padding: 0.9rem 1rem;
+    border-radius: 10px;
+    border: 2px solid #f0f0f0;
+    background-color: #fcfcfc;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+    .form-control:focus {
+        box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.1);
+        border-color: #198754;
+        background-color: white;
+    }
+
+.btn-login {
+    background: linear-gradient(45deg, #198754, #20c997);
+    border: none;
+    padding: 0.9rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+    letter-spacing: 0.5px;
+}
+
+    .btn-login:hover {
+        background: linear-gradient(45deg, #146c43, #198754);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(32, 201, 151, 0.3);
+    }
+
+.form-label {
+    font-weight: 600;
+    color: #444;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Password Input Group */
+.password-wrapper {
+    position: relative;
+}
+
+    .password-wrapper .form-control {
+        padding-right: 45px;
+    }
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 0;
+    font-size: 1.1rem;
+    transition: color 0.2s ease;
+}
+
+    .password-toggle:hover {
+        color: #198754;
+    }
+
+/* Large Desktop */
+@media (min-width: 1200px) {
+    .branding-side {
+        flex: 2;
+    }
+
+    .login-side {
+        flex: 1;
+    }
+
+    .branding-content h1 {
+        font-size: 3.5rem;
+    }
+
+    .branding-content p {
+        font-size: 1.3rem;
+    }
+}
+
+/* Tablet */
+@media (max-width: 991.98px) {
+    .branding-content h1 {
+        font-size: 2.5rem;
+    }
+
+    .login-box {
+        padding: 2rem;
+        max-width: 350px;
+    }
+}
+
+/* Tablet Portrait (like 912x1368) */
+@media (max-width: 991.98px) and (min-width: 768px) {
+    .branding-side {
+        flex: 1;
+        background-position: center center;
+        background-size: cover;
+    }
+
+    .login-side {
+        flex: 1;
+    }
+
+    .branding-content h1 {
+        font-size: 2.2rem;
+    }
+
+    .branding-content p {
+        font-size: 1rem;
+    }
+
+    .login-box {
+        padding: 2rem;
+        max-width: 320px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 767.98px) {
+    .main-wrapper {
+        flex-direction: column;
+    }
+
+    .branding-side {
+        flex: none;
+        min-height: 200px;
+        height: 25vh;
+    }
+
+    .branding-content h1 {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .branding-content p {
+        font-size: 0.9rem;
+    }
+
+    .branding-content {
+        padding: 1rem;
+    }
+
+    .login-side {
+        flex: 1;
+        min-height: auto;
+        padding: 1.5rem;
+    }
+
+    .login-box {
+        padding: 1.5rem;
+        max-width: 100%;
+        border-radius: 16px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    }
+
+    .login-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .login-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-control {
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-login {
+        padding: 0.8rem;
+        font-size: 0.95rem;
+    }
+
+    .form-label {
+        font-size: 0.75rem;
+    }
+}
+
+/* Extra Small */
+@media (max-width: 400px) {
+    .branding-side {
+        height: 20vh;
+        min-height: 150px;
+    }
+
+    .branding-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .branding-content p {
+        font-size: 0.8rem;
+    }
+
+    .login-side {
+        padding: 1rem;
+    }
+
+    .login-box {
+        padding: 1.2rem;
+    }
+
+    .login-header h2 {
+        font-size: 1.3rem;
+    }
+}
