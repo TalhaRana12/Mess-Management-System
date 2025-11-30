@@ -15,11 +15,11 @@ namespace EAD_project.Controllers
         {
             using (MessDbContext mydb = new MessDbContext())
             {
-                var user = mydb.TblUsers.Where(row => row.Username == name && row.PasswordHash == password);
+                var user = mydb.TblUsers.Where(row => row.Username == name && row.PasswordHash == password && row.Role =="Admin");
 
                 if (user != null)
                 {
-                    return RedirectToAction("dashboard");
+                    return RedirectToAction("Admindashboard","Admin");
                 }
                 else
                 {
@@ -28,11 +28,6 @@ namespace EAD_project.Controllers
 
             }
 
-        }
-        [HttpGet]
-        public IActionResult dashboard()
-        {
-            return View();
         }
     }
 }
