@@ -46,13 +46,13 @@
                 <form id="loginForm" asp-controller="Login" asp-action="check" method="post">
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" placeholder="e.g. abc" >
+                        <input type="text" class="form-control" id="username" placeholder="e.g. abc" name="name" >
                     </div>
 
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
                         <div class="password-wrapper">
-                            <input type="password" class="form-control" id="password" placeholder="••••••••" >
+                            <input type="password" class="form-control" id="password" placeholder="••••••••" name="password" >
                             <button type="button" class="password-toggle" id="togglePassword">
                                 <i class="bi bi-eye"></i>
                             </button>
