@@ -51,7 +51,8 @@ function loadMembers(filteredData = null) {
 
         data.forEach((member, index) => {
             const statusText = member.isActive ? 'Active' : 'Inactive';
-            const initials = member.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            //const initials = member.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            const initials = member.name.replace(/\s+/g, '').substring(0, 2).toUpperCase();
 
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -149,8 +150,8 @@ function viewMember(id) {
     const member = membersData.find(m => m.userId === id);
     if (!member) return;
 
-    document.getElementById('viewMemberName').textContent = member.name;
-    document.getElementById('viewMemberEmail').textContent = member.username;
+    document.getElementById('viewMemberName').textContent = member.username;
+    document.getElementById('viewMemberEmail').textContent = member.name;
     document.getElementById('viewMemberUsername').textContent = member.username;
     document.getElementById('viewMemberCnic').textContent = member.cnic;
     document.getElementById('viewMemberDepartment').textContent = member.department;
@@ -191,12 +192,13 @@ function editMember(id) {
     if (!member) return;
 
     document.getElementById('editMemberId').value = member.userId;
-    document.getElementById('editEmail').value = member.username; // <-- corrected
+    document.getElementById('editEmail').value = member.name; // <-- corrected
     document.getElementById('editCnic').value = member.cnic;
     document.getElementById('editDepartment').value = member.department;
     document.getElementById('editUsername').value = member.username;
-    //document.getElementById('editRole').value = member.role || '';
-    document.getElementById('editStatus').value = member.isActive; // true/false
+   // document.getElementById('editRole').value = member.role;
+    document.getElementById('editStatus').value = member.isActive ? 'Active' : 'Inactive';
+
 
     currentMemberId = id;
     editMemberModal.show();
