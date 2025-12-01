@@ -45,7 +45,7 @@ namespace EAD_project.Controllers
                 {
                     // Optional: Add an error message to display on the login page
                     ViewBag.Error = "Invalid Username or Password";
-                    return RedirectToAction("login");
+                    return View("login");
                 }
             }
         }
