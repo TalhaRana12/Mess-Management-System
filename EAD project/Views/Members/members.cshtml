@@ -65,7 +65,7 @@
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
-                    <a href="adduser.html" class="btn btn-add-member">
+                    <a href="@Url.Action("AddMember","addmember")" class="btn btn-add-member">
                         <i class="bi bi-person-plus-fill me-2"></i>Add Member
                     </a>
                 </div>
@@ -105,17 +105,7 @@
                             </div>
                         </div>
                     </div>
-                    @* <div class="col-6 col-md-3"> *@
-                    @*     <div class="mini-stat-card"> *@
-                    @*         <div class="mini-stat-icon bg-info-light"> *@
-                    @*             <i class="bi bi-calendar-plus-fill text-info"></i> *@
-                    @*         </div> *@
-                    @*         <div class="mini-stat-info"> *@
-                    @*             <h4 id="newThisMonth">0</h4> *@
-                    @*             <p>New This Month</p> *@
-                    @*         </div> *@
-                    @*     </div> *@
-                    @* </div> *@
+                   
                     <div class="col-6 col-md-3">
                         <div class="mini-stat-card">
                             <div class="mini-stat-icon bg-info-light">
@@ -238,6 +228,14 @@
                                 <input type="text" class="form-control" id="editUsername" required>
                             </div>
                         </div>
+                         <div class="mb-3">
+                            <label for="editPassword" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                                <input type="text" class="form-control" id="editPassword" placeholder="Leave blank to keep current password">
+                            </div>
+                            <small class="text-muted">Leave empty if you don't want to change the password</small>
+                        </div>
                         <div class="mb-3">
                             <label for="editStatus" class="form-label">Status</label>
                             <div class="input-group">
@@ -312,6 +310,10 @@
                         <div class="detail-row">
                             <span class="detail-label"><i class="bi bi-credit-card-fill me-2"></i>CNIC</span>
                             <span class="detail-value" id="viewMemberCnic">-</span>
+                        </div>
+                         <div class="detail-row">
+                            <span class="detail-label"><i class="bi bi-lock-fill me-2"></i>Password</span>
+                            <span class="detail-value" id="viewMemberPassword">********</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label"><i class="bi bi-building-fill me-2"></i>Department</span>

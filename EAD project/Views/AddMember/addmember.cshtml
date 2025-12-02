@@ -1,0 +1,203 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mess Management - Add Member</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/addmember.css">
+</head>
+<body>
+
+    <div class="dashboard-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3><i class="bi bi-egg-fried me-2"></i>MessHub</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashborad.html" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+                <a href="#" class="nav-link active"><i class="bi bi-people-fill"></i> Members</a>
+                <a href="#" class="nav-link"><i class="bi bi-calendar-check-fill"></i> Attendance</a>
+                <a href="#" class="nav-link"><i class="bi bi-journal-text"></i> Menu</a>
+                <a href="#" class="nav-link"><i class="bi bi-receipt"></i> Bills</a>
+                <a href="#" class="nav-link"><i class="bi bi-exclamation-triangle-fill"></i> Disputes</a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="login.html" class="nav-link"><i class="bi bi-box-arrow-left"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navbar -->
+            <header class="top-navbar">
+                <button class="btn sidebar-toggle d-md-none" id="sidebarToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h4 class="page-title">Add New Member</h4>
+                <div class="navbar-right">
+                    <span class="user-greeting">Hello, <strong>Admin</strong></span>
+                    <div class="user-avatar">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Add User Content -->
+            <div class="dashboard-content">
+                <div class="row justify-content-center">
+                    <div class="col-12 col-lg-8 col-xl-6">
+                        <div class="card form-card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-person-plus-fill me-2"></i>Member Registration</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="addUserForm" asp-controller="User" asp-action="AddMember" method="post">
+
+                                    <!-- Email Field -->
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
+                                            <input type="email" class="form-control" id="email" name="email" placeholder="e.g. john.doe@example.com" required>
+                                        </div>
+                                        <div class="invalid-feedback" id="emailError">Please enter a valid email address.</div>
+                                        <div class="valid-feedback" id="emailSuccess">Email is valid!</div>
+                                    </div>
+
+                                    <!-- CNIC Field -->
+                                    <div class="mb-3">
+                                        <label for="cnic" class="form-label">CNIC <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-credit-card-fill"></i></span>
+                                            <input type="text" class="form-control" id="cnic" name="cnic" placeholder="e.g. 12345-1234567-1" maxlength="15" required>
+                                        </div>
+                                        <small class="text-muted">Format: XXXXX-XXXXXXX-X</small>
+                                        <div class="invalid-feedback" id="cnicError">Please enter a valid CNIC.</div>
+                                    </div>
+
+                                    <!-- Department Field -->
+                                    <div class="mb-3">
+                                        <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-building-fill"></i></span>
+                                            <select class="form-select" id="department" name="department" required>
+                                                <option value="" selected disabled>Select Department</option>
+                                                <option value="Computer Science">Computer Science</option>
+                                                <option value="Electrical Engineering">Electrical Engineering</option>
+                                                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                                <option value="Civil Engineering">Civil Engineering</option>
+                                                <option value="Business Administration">Business Administration</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <hr class="my-4">
+
+                                    <!-- Auto Generated Section -->
+                                    <div class="auto-generated-section">
+                                        <h6 class="section-title"><i class="bi bi-magic me-2"></i>Auto-Generated Credentials</h6>
+                                        <p class="text-muted small mb-3">Username and password will be generated automatically based on email.</p>
+
+                                        <!-- Username Field (Auto-generated) -->
+                                        <div class="mb-3">
+                                            <label for="username" class="form-label">Username</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                                <input type="text" class="form-control" id="username" name="username" readonly>
+                                                <button type="button" class="btn btn-outline-secondary" id="regenerateUsername" title="Regenerate">
+                                                    <i class="bi bi-arrow-clockwise"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted">Generated from email address</small>
+                                        </div>
+
+                                        <!-- Password Field (Auto-generated) -->
+                                        <div class="mb-3">
+                                            <label for="password" class="form-label">Password</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                                                <input type="text" class="form-control" id="password" name="password" readonly>
+                                                <button type="button" class="btn btn-outline-secondary" id="regeneratePassword" title="Regenerate">
+                                                    <i class="bi bi-arrow-clockwise"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" id="copyPassword" title="Copy Password">
+                                                    <i class="bi bi-clipboard"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted">Auto-generated secure password</small>
+                                        </div>
+
+                                        <!-- Role Field (Selectable) -->
+                                        <div class="mb-3">
+                                            <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-shield-fill"></i></span>
+                                                <select class="form-select" id="role" name="role" required>
+                                                    <option value="Member" selected>Member</option>
+                                                    <option value="Admin">Admin</option>
+                                                </select>
+                                            </div>
+                                            <small class="text-muted">Select the role for this user</small>
+                                        </div>
+                                    </div>
+
+                                    <hr class="my-4">
+
+                                    <!-- Action Buttons -->
+                                    <div class="d-flex gap-3">
+                                        <button type="submit" class="btn btn-success flex-grow-1" id="submitBtn" disabled>
+                                            <i class="bi bi-check-circle-fill me-2"></i>Add Member
+                                        </button>
+                                        <a href="dashborad.html" class="btn btn-outline-secondary">
+                                            <i class="bi bi-x-circle me-2"></i>Cancel
+                                        </a>
+                                    </div>
+
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Credentials Preview Card -->
+                        <div class="card mt-4" id="credentialsPreview" style="display: none;">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0"><i class="bi bi-check-circle-fill me-2"></i>Member Credentials Preview</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-3">Share these credentials with the new member:</p>
+                                <div class="credentials-box">
+                                    <p><strong>Email:</strong> <span id="previewEmail">-</span></p>
+                                    <p><strong>Username:</strong> <span id="previewUsername">-</span></p>
+                                    <p><strong>Password:</strong> <span id="previewPassword">-</span></p>
+                                    <p><strong>Role:</strong> <span id="previewRole">Member</span></p>
+                                </div>
+                                <button type="button" class="btn btn-outline-success btn-sm mt-2" id="copyAllCredentials">
+                                    <i class="bi bi-clipboard me-1"></i>Copy All Credentials
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="~/js/addmember.js"></script>
+</body>
+</html>

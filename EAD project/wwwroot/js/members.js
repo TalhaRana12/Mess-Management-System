@@ -156,6 +156,7 @@ function viewMember(id) {
     document.getElementById('viewMemberName').textContent = member.username;
     document.getElementById('viewMemberEmail').textContent = member.name;
     document.getElementById('viewMemberUsername').textContent = member.username;
+    document.getElementById('viewMemberPassword').textContent = member.passwordHash;
     document.getElementById('viewMemberCnic').textContent = member.cnic;
     document.getElementById('viewMemberDepartment').textContent = member.department;
     document.getElementById('viewMemberRole').textContent = member.role || '';
@@ -195,7 +196,8 @@ function editMember(id) {
     if (!member) return;
 
     document.getElementById('editMemberId').value = member.userId;
-    document.getElementById('editEmail').value = member.name; // <-- corrected
+    document.getElementById('editEmail').value = member.name;
+    document.getElementById('editPassword').value = member.passwordHash;// <-- corrected
     document.getElementById('editCnic').value = member.cnic;
     document.getElementById('editDepartment').value = member.department;
     document.getElementById('editUsername').value = member.username;
@@ -216,6 +218,7 @@ document.getElementById('saveEditBtn').addEventListener('click', function () {
     membersData[memberIndex] = {
         ...membersData[memberIndex],
         name: document.getElementById('editName').value,
+        passwordHash: document.getElementById('editPassword').value,
         cnic: document.getElementById('editCnic').value,
         department: document.getElementById('editDepartment').value,
         username: document.getElementById('editUsername').value,
