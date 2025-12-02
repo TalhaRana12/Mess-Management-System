@@ -239,6 +239,41 @@ Role: ${roleSelect.value}
         showToast('Failed to copy credentials', 'error');
     });
 });
+// Collect all form data into a single object
+const getUserData = () => {
+    return {
+        name: emailInput.value.trim(),           // email as Name
+        cnic: cnicInput.value.trim() || null,    // CNIC (nullable)
+        department: departmentSelect.value || null, // Department (nullable)
+        Username: usernameInput.value.trim(),
+        passwordHash: passwordInput.value,       // password
+        role: roleSelect.value,
+        isActive: true                            // default active
+    };
+};
+
+async function saveUser(userData) {
+    try {
+        const response = await fetch('/AddMember/adduser_api', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        });
+
+        if (!response.ok) {
+            const msg = await response.text();
+            throw new Error(msg);
+        }
+
+        const result = await response.text();
+        showSuccessPopup();
+    }
+    catch (err) {
+        showToast(err.message, "error");
+    }
+}
 
 // Form Submit Handler
 addUserForm.addEventListener('submit', function (e) {
@@ -248,9 +283,8 @@ addUserForm.addEventListener('submit', function (e) {
         showToast('Please fill all required fields correctly', 'error');
         return false;
     }
-
-    // Show success popup
-    showSuccessPopup();
+    const userdata = getUserData();
+    saveUser(userdata);
 });
 
 // Success Popup Function
