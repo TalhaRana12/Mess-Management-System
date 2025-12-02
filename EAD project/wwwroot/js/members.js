@@ -16,7 +16,8 @@ const sidebarToggle = document.getElementById('sidebarToggle');
 const totalMembersEl = document.getElementById('totalMembers');
 const activeMembersEl = document.getElementById('activeMembers');
 const inactiveMembersEl = document.getElementById('inactiveMembers');
-const newThisMonthEl = document.getElementById('newThisMonth');
+//const newThisMonthEl = document.getElementById('newThisMonth');
+const totalDepartmentsEl = document.getElementById('totalDepartments');
 
 // Modal Elements
 const editMemberModal = new bootstrap.Modal(document.getElementById('editMemberModal'));
@@ -98,11 +99,13 @@ function updateStats() {
     const total = membersData.length;
     const active = membersData.filter(m => m.isActive).length;
     const inactive = membersData.filter(m => !m.isActive).length;
+    const uniqueDepartments = [...new Set(membersData.map(m => m.department))].length;
 
     totalMembersEl.textContent = total;
     activeMembersEl.textContent = active;
     inactiveMembersEl.textContent = inactive;
-    newThisMonthEl.textContent = Math.floor(Math.random() * 5) + 1; // random demo
+    //newThisMonthEl.textContent = Math.floor(Math.random() * 5) + 1; // random demo
+    totalDepartmentsEl.textContent = uniqueDepartments;
 }
 
 // Search Members
