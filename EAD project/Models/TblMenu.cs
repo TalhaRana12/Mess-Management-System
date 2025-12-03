@@ -23,4 +23,10 @@ public partial class TblMenu
 
     [Column(TypeName = "decimal(10, 2)")]
     public decimal Price { get; set; }
+
+    [StringLength(10)]
+    [Unicode(false)]
+    public string MealType { get; set; } = null!;
+
+    public bool IsMandatory { get; set; }
 }
