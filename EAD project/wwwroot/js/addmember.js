@@ -227,11 +227,11 @@ copyPasswordBtn.addEventListener('click', function () {
 copyAllCredentialsBtn.addEventListener('click', function () {
     const roleSelect = document.getElementById('role');
     const credentials = `
-Email: ${emailInput.value}
-Username: ${usernameInput.value}
-Password: ${passwordInput.value}
-Role: ${roleSelect.value}
-    `.trim();
+    Email: ${emailInput.value}
+    Username: ${usernameInput.value}
+    Password: ${passwordInput.value}
+    Role: ${roleSelect.value}
+        `.trim();
 
     navigator.clipboard.writeText(credentials).then(() => {
         showToast('All credentials copied to clipboard!', 'success');

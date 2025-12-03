@@ -1,7 +1,7 @@
 ﻿// membersData is passed from Razor view
 // <script>const membersData = @Html.Raw(Json.Serialize(Model));</script>
 
-console.log(membersData); // check structure
+//console.log(membersData); // check structure
 
 // DOM Elements
 const searchInput = document.getElementById('searchInput');
@@ -191,6 +191,7 @@ document.getElementById('editFromViewBtn').addEventListener('click', function ()
 //    currentMemberId = id;
 //    editMemberModal.show();
 //}
+
 function editMember(id) {
     const member = membersData.find(m => m.userId === id);
     if (!member) return;
@@ -210,26 +211,125 @@ function editMember(id) {
 }
 
 // Save Edit
-document.getElementById('saveEditBtn').addEventListener('click', function () {
+//document.getElementById('saveEditBtn').addEventListener('click', function () {
+//    const id = parseInt(document.getElementById('editMemberId').value);
+//    const memberIndex = membersData.findIndex(m => m.userId === id);
+//    if (memberIndex === -1) return;
+
+    //membersData[memberIndex] = {
+    //    ...membersData[memberIndex],
+    //    name: document.getElementById('editName').value,
+    //    passwordHash: document.getElementById('editPassword').value,
+    //    cnic: document.getElementById('editCnic').value,
+    //    department: document.getElementById('editDepartment').value,
+    //    username: document.getElementById('editUsername').value,
+    //    role: document.getElementById('editRole').value,
+    //    isActive: document.getElementById('editStatus').value === 'true'
+    //};
+
+//    editMemberModal.hide();
+//    loadMembers();
+//    updateStats();
+//    showToast('Member updated successfully!', 'success');
+//});
+//document.getElementById('saveEditBtn').addEventListener('click', async function () {
+//    const id = parseInt(document.getElementById('editMemberId').value);
+//    const memberIndex = membersData.findIndex(m => m.userId === id);
+//    if (memberIndex === -1) return;
+
+//    // Create updated object to send to backend
+//    const updatedMember = {
+//        UserId: id,
+//        name: document.getElementById('editEmail').value.trim(),
+//        passwordHash: document.getElementById('editPassword').value.trim(),
+//        cnic: document.getElementById('editCnic').value.trim(),
+//        department: document.getElementById('editDepartment').value,
+//        Username: document.getElementById('editUsername').value.trim(),
+//        isActive: document.getElementById('editStatus').value === 'true'
+//    };
+
+//    try {
+//        // Call backend API
+//        const response = await fetch('/Members/update_api', {
+//            method: 'POST',
+//            headers: {
+//                'Content-Type': 'application/json'
+//            },
+//            body: JSON.stringify(updatedMember)
+//        });
+
+//        if (!response.ok) {
+//            throw new Error(await response.text());
+//        }
+
+//        // If backend success → update frontend list also
+//        membersData[memberIndex] = {
+//            ...membersData[memberIndex],
+//            name: document.getElementById('editEmail').value,
+//            passwordHash: document.getElementById('editPassword').value,
+//            cnic: document.getElementById('editCnic').value,
+//            department: document.getElementById('editDepartment').value,
+//            username: document.getElementById('editUsername').value,
+//            role: document.getElementById('editRole').value,
+//            isActive: document.getElementById('editStatus').value === 'true'
+//        };
+
+//        editMemberModal.hide();
+//        loadMembers();
+//        updateStats();
+//        showToast('Member updated successfully!', 'success');
+//    }
+//    catch (err) {
+//        showToast(err.message, 'error');
+//    }
+//});
+document.getElementById('saveEditBtn').addEventListener('click', async function () {
     const id = parseInt(document.getElementById('editMemberId').value);
     const memberIndex = membersData.findIndex(m => m.userId === id);
     if (memberIndex === -1) return;
 
-    membersData[memberIndex] = {
-        ...membersData[memberIndex],
-        name: document.getElementById('editName').value,
-        passwordHash: document.getElementById('editPassword').value,
-        cnic: document.getElementById('editCnic').value,
-        department: document.getElementById('editDepartment').value,
-        username: document.getElementById('editUsername').value,
-        role: document.getElementById('editRole').value,
-        isActive: document.getElementById('editStatus').value === 'true'
+    // Create updated object to send to backend
+    const updatedMember = {
+        UserId: id,
+        Name: document.getElementById('editEmail').value.trim(),
+        PasswordHash: document.getElementById('editPassword').value.trim(),
+        Cnic: document.getElementById('editCnic').value.trim(),
+        Department: document.getElementById('editDepartment').value,
+        Username: document.getElementById('editUsername').value.trim(),
+        IsActive: document.getElementById('editStatus').value === 'Active' // FIX
     };
 
-    editMemberModal.hide();
-    loadMembers();
-    updateStats();
-    showToast('Member updated successfully!', 'success');
+    try {
+        // Call backend API
+        const response = await fetch('/Members/update_api', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedMember)
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        // Update local frontend array
+        membersData[memberIndex] = {
+            ...membersData[memberIndex],
+            name: updatedMember.Name,
+            passwordHash: updatedMember.PasswordHash,
+            cnic: updatedMember.Cnic,
+            department: updatedMember.Department,
+            username: updatedMember.Username,
+            isActive: updatedMember.IsActive
+        };
+
+        editMemberModal.hide();
+        loadMembers();
+        updateStats();
+        showToast('Member updated successfully!', 'success');
+
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
 });
 
 // Delete Member
@@ -245,15 +345,89 @@ function deleteMember(id) {
 }
 
 // Confirm Delete
-document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
-    const id = parseInt(document.getElementById('deleteMemberId').value);
-    membersData = membersData.filter(m => m.userId !== id);
+//document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+//    const id = parseInt(document.getElementById('deleteMemberId').value);
+//    membersData = membersData.filter(m => m.userId !== id);
+//    try {
+//        // Call backend API
+//        const response = await fetch('/Members/update_api', {
+//            method: 'POST',
+//            headers: {
+//                'Content-Type': 'application/json'
+//            },
+//            body: JSON.stringify(updatedMember)
+//        });
 
-    deleteMemberModal.hide();
-    loadMembers();
-    updateStats();
-    showToast('Member deleted successfully!', 'success');
+//        if (!response.ok) {
+//            throw new Error(await response.text());
+//        }
+//    }
+//    catch (err) {
+//        showToast(err.message, "error");
+//    }
+//    deleteMemberModal.hide();
+//    loadMembers();
+//    updateStats();
+//    showToast('Member deleted successfully!', 'success');
+//});
+//document.getElementById('confirmDeleteBtn').addEventListener('click', async function () {
+//    const id = parseInt(document.getElementById('deleteMemberId').value);
+
+//    try {
+//        const response = await fetch('/Members/delete_api', {
+//            method: 'POST',
+//            headers: { 'Content-Type': 'application/json' },
+//            body: JSON.stringify(id)
+//        });
+
+//        if (!response.ok) {
+//            throw new Error(await response.text());
+//        }
+
+//        // Remove locally
+//        membersData = membersData.filter(m => m.userId !== id);
+
+//        deleteMemberModal.hide();
+//        loadMembers();
+//        updateStats();
+
+//        showToast('Member deleted successfully!', 'success');
+
+//    } catch (err) {
+//        showToast("Error deleting member", "error");
+//    }
+//});
+document.getElementById('confirmDeleteBtn').addEventListener('click', async function () {
+    const id = parseInt(document.getElementById('deleteMemberId').value);
+
+    try {
+        const response = await fetch('/Members/delete_api', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(id)
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        // Remove member from local array
+        membersData = membersData.filter(m => m.userId !== id);
+
+        // Hide modal first
+        deleteMemberModal.hide();
+
+        // Reload table and stats
+        loadMembers();
+        updateStats();
+
+        showToast('Member deleted successfully!', 'success');
+
+    } catch (err) {
+        showToast("Error deleting member: " + err.message, "error");
+    }
 });
+
 
 // Sidebar Toggle
 if (sidebarToggle) {
