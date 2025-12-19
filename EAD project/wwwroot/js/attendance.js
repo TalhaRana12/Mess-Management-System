@@ -3,8 +3,6 @@
 // ========================================
 
 // Global Variables
-// NOTE: 'allMembers' and 'todayMenu' are populated via CSHTML (Razor). 
-// We do not redeclare them here to prevent "Identifier already declared" errors.
 let attendanceData = [];
 let selectedDate = new Date();
 let selectedMealType = 'Lunch';
@@ -21,10 +19,8 @@ document.addEventListener('DOMContentLoaded', function () {
     setupEventListeners();
 
     // Initial Load
-    // Get current day name to filter menu immediately
     const currentDay = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
     displayMenu(currentDay);
-
     loadMembers();
 
     // Sidebar toggle (Mobile Support)
@@ -52,7 +48,6 @@ document.addEventListener('DOMContentLoaded', function () {
 // ========================================
 function initializeDatePicker() {
     const dateInput = document.getElementById('attendanceDate');
-    // Set input value to ISO format (YYYY-MM-DD)
     dateInput.value = formatDateForInput(selectedDate);
     updateDateDisplay();
 }
@@ -71,31 +66,25 @@ function formatDateDisplay(date) {
 }
 
 function updateDateDisplay() {
-    // 1. Update UI Text
     document.getElementById('selectedDateDisplay').textContent = formatDateDisplay(selectedDate);
 
-    // 2. Update Day Badge
     const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
     document.getElementById('todayDayBadge').textContent = dayName;
 
-    // 3. Update Menu & Prices for this specific day
     displayMenu(dayName);
     updateMealDisplay();
 
-    // 4. Reload Attendance Table
     if (allMembers.length > 0) {
         loadAttendanceForDate();
     }
 }
 
 function updateMealDisplay() {
-    // Update Labels
     document.getElementById('selectedMealDisplay').textContent = selectedMealType;
     document.getElementById('tableHeaderMeal').textContent = selectedMealType;
     document.getElementById('foodColumnHeader').textContent = `Food (${selectedMealType})`;
     document.getElementById('statMealType').textContent = selectedMealType;
 
-    // Update Price based on Day & Meal Type
     const mealPrice = calculateMealPrice(selectedMealType);
     document.getElementById('selectedMealPrice').textContent = mealPrice;
     document.getElementById('todayFoodPrice').textContent = mealPrice;
@@ -105,35 +94,29 @@ function updateMealDisplay() {
 // 3. Event Listeners
 // ========================================
 function setupEventListeners() {
-    // Previous Day
     document.getElementById('prevDateBtn').addEventListener('click', () => {
         selectedDate.setDate(selectedDate.getDate() - 1);
         document.getElementById('attendanceDate').value = formatDateForInput(selectedDate);
         updateDateDisplay();
     });
 
-    // Next Day
     document.getElementById('nextDateBtn').addEventListener('click', () => {
         selectedDate.setDate(selectedDate.getDate() + 1);
         document.getElementById('attendanceDate').value = formatDateForInput(selectedDate);
         updateDateDisplay();
     });
 
-    // Today Button
     document.getElementById('todayBtn').addEventListener('click', () => {
         selectedDate = new Date();
         document.getElementById('attendanceDate').value = formatDateForInput(selectedDate);
         updateDateDisplay();
     });
 
-    // Date Input Change
     document.getElementById('attendanceDate').addEventListener('change', (e) => {
-        // Force time to T00:00:00 to prevent timezone shifts
         selectedDate = new Date(e.target.value + 'T00:00:00');
         updateDateDisplay();
     });
 
-    // Meal Type Radio Buttons
     document.querySelectorAll('input[name="mealType"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             selectedMealType = e.target.value;
@@ -142,14 +125,13 @@ function setupEventListeners() {
         });
     });
 
-    // Action Buttons
     document.getElementById('saveAllAttendanceBtn').addEventListener('click', saveAllAttendance);
     document.getElementById('markAllPresentBtn').addEventListener('click', markAllPresent);
     document.getElementById('searchMember').addEventListener('input', filterAttendance);
 }
 
 // ========================================
-// 4. Data Loading (Members & Attendance)
+// 4. Data Loading
 // ========================================
 async function loadMembers() {
     showLoading(true);
@@ -168,22 +150,31 @@ async function loadMembers() {
 
 async function loadAttendanceForDate() {
     try {
-        // String format for data consistency
         const dateStr = formatDateForInput(selectedDate);
-
-        // NOTE: In a real scenario, you would fetch existing attendance for this date here.
-        // const existingAttendance = await fetch(...).json();
-        const existingAttendance = [];
+        const existingAttendance = []; // In real app: await fetch(...)
 
         attendanceData = allMembers.map(member => {
-            // Normalize Property Names (Case Insensitive handling)
             const mId = member.userId || member.UserId;
             const mName = member.name || member.Name;
             const mUser = member.username || member.Username;
             const mDept = member.department || member.Department;
 
-            // Check if record exists in fetched data
             const existing = existingAttendance.find(a => a.userId === mId && a.mealType === selectedMealType);
+
+            // Determine initial status
+            const isTeaWater = existing?.teaWater !== undefined ? existing.teaWater : true;
+            const isFood = existing?.food || false;
+
+            // --- PRICE CALCULATION LOGIC ---
+            let initialPrice = 0;
+            if (isFood) {
+                // If Food is checked -> Full Meal Price
+                initialPrice = calculateMealPrice(selectedMealType);
+            } else if (isTeaWater) {
+                // If Food Unchecked but Tea Checked -> Tea Price
+                initialPrice = calculateTeaWaterCost();
+            }
+            // -------------------------------
 
             return {
                 attendanceId: existing?.attendanceId || 0,
@@ -193,10 +184,9 @@ async function loadAttendanceForDate() {
                 department: mDept,
                 date: dateStr,
                 mealType: selectedMealType,
-                // Default teaWater to true for easier workflow
-                teaWater: existing?.teaWater !== undefined ? existing.teaWater : true,
-                food: existing?.food || false,
-                foodPrice: existing?.foodPrice || 0
+                teaWater: isTeaWater,
+                food: isFood,
+                foodPrice: existing?.foodPrice || initialPrice
             };
         });
 
@@ -227,7 +217,6 @@ function renderAttendanceTable() {
     attendanceData.forEach((attendance, index) => {
         const row = document.createElement('tr');
 
-        // Initial Status Calculation
         let statusClass = 'status-absent';
         let statusText = 'Absent';
 
@@ -236,17 +225,14 @@ function renderAttendanceTable() {
             statusText = 'Present';
         } else if (attendance.teaWater) {
             statusClass = 'status-partial';
-            statusText = 'Tea/Water Only';
+            statusText = 'Tea Only';
         }
 
-        // HTML Structure
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>
                 <div class="member-info">
-                    <div class="member-avatar">
-                        ${attendance.name.charAt(0).toUpperCase()}
-                    </div>
+                    <div class="member-avatar">${attendance.name.charAt(0).toUpperCase()}</div>
                     <div class="member-details">
                         <div class="member-name">${attendance.name}</div>
                         <div class="member-username">@${attendance.username}</div>
@@ -276,13 +262,12 @@ function renderAttendanceTable() {
         tbody.appendChild(row);
     });
 
-    // Attach Listeners
     document.querySelectorAll('.tea-checkbox').forEach(cb => cb.addEventListener('change', handleTeaCheckboxChange));
     document.querySelectorAll('.food-checkbox').forEach(cb => cb.addEventListener('change', handleFoodCheckboxChange));
 }
 
 // ========================================
-// 6. Checkbox Logic Handlers
+// 6. Checkbox Logic Handlers (PRICE LOGIC UPDATED)
 // ========================================
 
 // Handle Tea/Water Checkbox
@@ -294,12 +279,20 @@ function handleTeaCheckboxChange(e) {
     if (attendance) {
         attendance.teaWater = isChecked;
 
-        // LOGIC: Unchecking Tea removes Food automatically
         if (!isChecked) {
+            // Case: Tea Unchecked -> Remove Everything
             attendance.food = false;
             attendance.foodPrice = 0;
+
+            // Visual update
             const row = e.target.closest('tr');
             row.querySelector('.food-checkbox').checked = false;
+        } else {
+            // Case: Tea Checked. 
+            // If Food is NOT checked, we must apply Tea Price.
+            if (!attendance.food) {
+                attendance.foodPrice = calculateTeaWaterCost();
+            }
         }
 
         updateRowStatus(e.target.closest('tr'), attendance);
@@ -316,14 +309,21 @@ function handleFoodCheckboxChange(e) {
     if (attendance) {
         attendance.food = isChecked;
 
-        // LOGIC: Checking Food forces Tea/Water to be checked
         if (isChecked) {
+            // Case: Food Checked -> Full Meal Price
             attendance.teaWater = true;
             attendance.foodPrice = calculateMealPrice(selectedMealType);
+
+            // Visual update
             const row = e.target.closest('tr');
             row.querySelector('.tea-checkbox').checked = true;
         } else {
-            attendance.foodPrice = 0;
+            // Case: Food Unchecked -> Fallback to Tea Price if Tea is checked
+            if (attendance.teaWater) {
+                attendance.foodPrice = calculateTeaWaterCost();
+            } else {
+                attendance.foodPrice = 0;
+            }
         }
 
         updateRowStatus(e.target.closest('tr'), attendance);
@@ -349,33 +349,28 @@ function updateRowStatus(row, attendance) {
 }
 
 // ========================================
-// 7. Save to Database (FIXED PROPERTY NAME & DATE)
+// 7. Save to Database
 // ========================================
 async function saveAllAttendance() {
     const btn = document.getElementById('saveAllAttendanceBtn');
 
     try {
-        // 1. Loading State
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
 
-        // 2. Format Date Strictly (Fixes 1/1/0001 bug)
+        // 1. Force strict Date format to fix 1/1/0001 error
         const dateToSend = formatDateForInput(selectedDate);
 
-        // 3. Map Data to C# Entity Structure
+        // 2. Map data (Property names must match C# Class exactly)
         const attendanceRecords = attendanceData.map(a => ({
-            AttendanceID: a.attendanceId, // Int
-            UserId: a.userId,             // Int
-
-            // CRITICAL FIX: Renamed from 'Date' to 'AttendanceDate' to match C# model
-            AttendanceDate: dateToSend,
-
-            TeaWater: a.teaWater,         // Bool
-            Food: a.food,                 // Bool
-            FoodPrice: a.foodPrice        // Decimal
+            AttendanceID: a.attendanceId,
+            UserId: a.userId,
+            AttendanceDate: dateToSend, // Matches C# "AttendanceDate"
+            TeaWater: a.teaWater,
+            Food: a.food,
+            FoodPrice: a.foodPrice
         }));
 
-        // 4. API Call
         const response = await fetch('/Attendance/save_api', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -386,31 +381,27 @@ async function saveAllAttendance() {
             throw new Error(await response.text());
         }
 
-        // 5. Success
         showToast(`Attendance saved successfully for ${dateToSend}!`, 'success');
 
     } catch (err) {
         console.error('Error saving attendance:', err);
         showToast("Error saving attendance: " + err.message, "error");
     } finally {
-        // 6. Reset Button
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Save All';
     }
 }
 
 // ========================================
-// 8. Menu & Price Logic (Day Filtered)
+// 8. Menu & Price Logic
 // ========================================
 
 function displayMenu(dayName) {
-    // Helper accessors
     const getDay = (i) => i.dayOfWeek || i.DayOfWeek;
     const getMeal = (i) => i.mealType || i.MealType;
     const getDish = (i) => i.dishName || i.DishName;
     const getPrice = (i) => i.price || i.Price;
 
-    // Filter Global Menu by Day Name
     const itemsForToday = todayMenu.filter(m => getDay(m) === dayName);
 
     const lunchItems = itemsForToday.filter(m => getMeal(m) === 'Lunch');
@@ -419,41 +410,48 @@ function displayMenu(dayName) {
     const lunchList = document.getElementById('todayLunchList');
     const dinnerList = document.getElementById('todayDinnerList');
 
-    // Render Lunch
-    if (lunchItems.length > 0) {
-        lunchList.innerHTML = lunchItems.map(item => `
-            <li>
-                <span class="menu-item">${getDish(item)}</span>
-                <span class="menu-price">Rs. ${getPrice(item)}</span>
-            </li>
-        `).join('');
-        const lunchTotal = lunchItems.reduce((sum, item) => sum + getPrice(item), 0);
-        document.getElementById('lunchTotal').textContent = `Rs. ${lunchTotal}`;
-    } else {
-        lunchList.innerHTML = '<li class="text-muted">No items available</li>';
-        document.getElementById('lunchTotal').textContent = 'Rs. 0';
-    }
+    const renderItems = (items, element, totalEl) => {
+        if (items.length > 0) {
+            element.innerHTML = items.map(item => `
+                <li>
+                    <span class="menu-item">${getDish(item)}</span>
+                    <span class="menu-price">Rs. ${getPrice(item)}</span>
+                </li>
+            `).join('');
+            const total = items.reduce((sum, item) => sum + getPrice(item), 0);
+            document.getElementById(totalEl).textContent = `Rs. ${total}`;
+        } else {
+            element.innerHTML = '<li class="text-muted">No items available</li>';
+            document.getElementById(totalEl).textContent = 'Rs. 0';
+        }
+    };
 
-    // Render Dinner
-    if (dinnerItems.length > 0) {
-        dinnerList.innerHTML = dinnerItems.map(item => `
-            <li>
-                <span class="menu-item">${getDish(item)}</span>
-                <span class="menu-price">Rs. ${getPrice(item)}</span>
-            </li>
-        `).join('');
-        const dinnerTotal = dinnerItems.reduce((sum, item) => sum + getPrice(item), 0);
-        document.getElementById('dinnerTotal').textContent = `Rs. ${dinnerTotal}`;
-    } else {
-        dinnerList.innerHTML = '<li class="text-muted">No items available</li>';
-        document.getElementById('dinnerTotal').textContent = 'Rs. 0';
-    }
+    renderItems(lunchItems, lunchList, 'lunchTotal');
+    renderItems(dinnerItems, dinnerList, 'dinnerTotal');
+}
+
+// ----------------------------------------------------
+// Helper: Calculate Tea/Water Cost Only
+// ----------------------------------------------------
+function calculateTeaWaterCost() {
+    const currentDayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const getDay = (i) => i.dayOfWeek || i.DayOfWeek;
+    const getDish = (i) => i.dishName || i.DishName;
+    const getPrice = (i) => i.price || i.Price;
+
+    // Filter for items with 'tea', 'chai', or 'water' in the name for TODAY
+    const teaWaterItems = todayMenu.filter(m => {
+        const dayMatch = getDay(m) === currentDayName;
+        const name = (getDish(m) || "").toLowerCase();
+        // Adjust keywords based on your DB dish names
+        return dayMatch && (name.includes('tea') || name.includes('chai') || name.includes('water'));
+    });
+
+    return teaWaterItems.reduce((sum, item) => sum + getPrice(item), 0);
 }
 
 function calculateMealPrice(mealType) {
-    // Recalculate based on current selected day
     const currentDayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
-
     const getDay = (i) => i.dayOfWeek || i.DayOfWeek;
     const getMeal = (i) => i.mealType || i.MealType;
     const getPrice = (i) => i.price || i.Price;
