@@ -1,0 +1,305 @@
+﻿@{
+	Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mess Management - Attendance</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/attendance.css">
+</head>
+<body>
+
+    <div class="dashboard-wrapper">
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3><i class="bi bi-egg-fried me-2"></i>MessHub</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashborad.html" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+                <a href="members.html" class="nav-link"><i class="bi bi-people-fill"></i> Members</a>
+                <a href="attendance.html" class="nav-link active"><i class="bi bi-calendar-check-fill"></i> Attendance</a>
+                <a href="menu.html" class="nav-link"><i class="bi bi-journal-text"></i> Menu</a>
+                <a href="#" class="nav-link"><i class="bi bi-receipt"></i> Bills</a>
+                <a href="#" class="nav-link"><i class="bi bi-exclamation-triangle-fill"></i> Disputes</a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="login.html" class="nav-link"><i class="bi bi-box-arrow-left"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navbar -->
+            <header class="top-navbar">
+                <button class="btn sidebar-toggle d-lg-none" id="sidebarToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h4 class="page-title">Attendance Management</h4>
+                <div class="navbar-right">
+                    <span class="user-greeting">Hello, <strong>Admin</strong></span>
+                    <div class="user-avatar">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Attendance Content -->
+            <div class="dashboard-content">
+                <!-- Date and Meal Selection Bar -->
+                <div class="date-selection-bar">
+                    <div class="date-control">
+                        <button class="btn btn-outline-secondary" id="prevDateBtn" title="Previous Day">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <div class="date-picker-wrapper">
+                            <input type="date" class="form-control date-input" id="attendanceDate">
+                        </div>
+                        <button class="btn btn-outline-secondary" id="nextDateBtn" title="Next Day">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                        <button class="btn btn-today" id="todayBtn">
+                            <i class="bi bi-calendar-today me-2"></i>Today
+                        </button>
+                    </div>
+                    <div class="meal-type-selection">
+                        <label class="meal-label">Meal Type:</label>
+                        <div class="btn-group meal-type-group" role="group">
+                            <input type="radio" class="btn-check" name="mealType" id="mealLunch" value="Lunch" checked>
+                            <label class="btn btn-outline-warning" for="mealLunch">
+                                <i class="bi bi-brightness-high-fill me-1"></i>Lunch
+                            </label>
+
+                            <input type="radio" class="btn-check" name="mealType" id="mealDinner" value="Dinner">
+                            <label class="btn btn-outline-primary" for="mealDinner">
+                                <i class="bi bi-moon-fill me-1"></i>Dinner
+                            </label>
+                        </div>
+                    </div>
+                    <div class="date-actions">
+                        <button class="btn btn-success" id="saveAllAttendanceBtn">
+                            <i class="bi bi-check-circle me-2"></i>Save All
+                        </button>
+                        <button class="btn btn-warning" id="markAllPresentBtn">
+                            <i class="bi bi-check-all me-2"></i>Mark All Present
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Selected Date and Meal Display -->
+                <div class="selected-info-bar">
+                    <div class="info-item">
+                        <i class="bi bi-calendar3 text-success"></i>
+                        <span><strong>Date:</strong> <span id="selectedDateDisplay">-</span></span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-clock text-primary"></i>
+                        <span><strong>Meal:</strong> <span id="selectedMealDisplay">Lunch</span></span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-currency-dollar text-warning"></i>
+                        <span><strong>Price:</strong> Rs. <span id="selectedMealPrice">0</span></span>
+                    </div>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="mini-stat-card">
+                            <div class="mini-stat-icon bg-primary-light">
+                                <i class="bi bi-people-fill text-primary"></i>
+                            </div>
+                            <div class="mini-stat-info">
+                                <h4 id="totalMembers">0</h4>
+                                <p>Total Members</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="mini-stat-card">
+                            <div class="mini-stat-icon bg-success-light">
+                                <i class="bi bi-cup-hot-fill text-success"></i>
+                            </div>
+                            <div class="mini-stat-info">
+                                <h4 id="teaWaterCount">0</h4>
+                                <p>Tea/Water</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="mini-stat-card">
+                            <div class="mini-stat-icon bg-warning-light">
+                                <i class="bi bi-egg-fried text-warning"></i>
+                            </div>
+                            <div class="mini-stat-info">
+                                <h4 id="foodCount">0</h4>
+                                <p>Food (<span id="statMealType">Lunch</span>)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="mini-stat-card">
+                            <div class="mini-stat-icon bg-danger-light">
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                            </div>
+                            <div class="mini-stat-info">
+                                <h4 id="absentCount">0</h4>
+                                <p>Absent (No Tea)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance Table Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-table me-2"></i>Attendance Sheet - <span id="tableHeaderMeal">Lunch</span></h5>
+                        <div class="header-actions">
+                            <div class="search-box-inline">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="searchMember" placeholder="Search member...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table attendance-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Member Name</th>
+                                        <th>Username</th>
+                                        <th>Department</th>
+                                        <th class="text-center">
+                                            <div class="checkbox-header">
+                                                <span>Tea/Water</span>
+                                                <small class="text-muted d-block">(Compulsory)</small>
+                                            </div>
+                                        </th>
+                                        <th class="text-center">
+                                            <div class="checkbox-header">
+                                                <span id="foodColumnHeader">Food (Lunch)</span>
+                                                <small class="text-muted d-block">Rs. <span id="todayFoodPrice">0</span></small>
+                                            </div>
+                                        </th>
+                                        <th class="text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendanceTableBody">
+                                    <!-- Attendance rows will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Empty State -->
+                        <div class="empty-state" id="emptyState" style="display: none;">
+                            <i class="bi bi-calendar-x"></i>
+                            <h5>No Members Found</h5>
+                            <p>No members match your search criteria.</p>
+                        </div>
+                        <!-- Loading State -->
+                        <div class="loading-state" id="loadingState">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Loading attendance...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Menu Info -->
+                <div class="row g-4 mt-2">
+                    <div class="col-12 col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-journal-text me-2"></i>Selected Date Menu</h5>
+                                <span class="badge bg-success" id="todayDayBadge">-</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="meal-section-dashboard">
+                                    <div class="meal-title">
+                                        <i class="bi bi-brightness-high-fill text-warning"></i> Lunch
+                                        <span class="meal-total" id="lunchTotal">Rs. 0</span>
+                                    </div>
+                                    <ul class="menu-list" id="todayLunchList">
+                                        <li class="text-muted">No items available</li>
+                                    </ul>
+                                </div>
+                                <div class="meal-section-dashboard mt-3">
+                                    <div class="meal-title">
+                                        <i class="bi bi-moon-fill text-primary"></i> Dinner
+                                        <span class="meal-total" id="dinnerTotal">Rs. 0</span>
+                                    </div>
+                                    <ul class="menu-list" id="todayDinnerList">
+                                        <li class="text-muted">No items available</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-info-circle me-2"></i>Instructions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="instruction-list">
+                                    <div class="instruction-item">
+                                        <i class="bi bi-1-circle-fill text-success"></i>
+                                        <div>
+                                            <strong>Select Date & Meal Type</strong>
+                                            <p>Choose the date and meal type (Lunch/Dinner) to mark attendance.</p>
+                                        </div>
+                                    </div>
+                                    <div class="instruction-item">
+                                        <i class="bi bi-2-circle-fill text-success"></i>
+                                        <div>
+                                            <strong>Tea/Water is Compulsory</strong>
+                                            <p>All members must pay for tea/water regardless of food consumption.</p>
+                                        </div>
+                                    </div>
+                                    <div class="instruction-item">
+                                        <i class="bi bi-3-circle-fill text-success"></i>
+                                        <div>
+                                            <strong>Food is Optional</strong>
+                                            <p>Check the Food box only if the member ate the selected meal.</p>
+                                        </div>
+                                    </div>
+                                    <div class="instruction-item">
+                                        <i class="bi bi-4-circle-fill text-success"></i>
+                                        <div>
+                                            <strong>Save Attendance</strong>
+                                            <p>Click "Save All" to save attendance for the selected date and meal.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script>
+        let allMembers=@Html.Raw(Json.Serialize(Model.user));
+        let todayMenu=@Html.Raw(Json.Serialize(Model.menu));
+    </script>
+    <script src="~/js/attendance.js"></script>
+</body>
+</html>
