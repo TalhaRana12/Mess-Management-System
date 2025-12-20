@@ -12,6 +12,7 @@ namespace EAD_project.Controllers
             public List<TblUser> user;
             public List<TblAttendance> attendances;
         }
+
         public async Task<IActionResult> attendance()
         {
             using (MessManagmentContext mydb = new MessManagmentContext())
@@ -21,17 +22,17 @@ namespace EAD_project.Controllers
                     menu = await mydb.TblMenus.ToListAsync(),
                     user = await mydb.TblUsers.ToListAsync(),
 
-                    // FIX: Select into a new object to break the circular link to 'User'
+                    // FIX: We MUST include MealType in the projection now
                     attendances = await mydb.TblAttendances
                         .Select(a => new TblAttendance
                         {
                             AttendanceId = a.AttendanceId,
                             UserId = a.UserId,
                             AttendanceDate = a.AttendanceDate,
+                            MealType = a.MealType, // <--- ADDED THIS
                             TeaWater = a.TeaWater,
                             Food = a.Food,
                             FoodPrice = a.FoodPrice
-                            // We deliberately do NOT include 'User' or 'TblRequests' here
                         })
                         .ToListAsync()
                 };
@@ -49,31 +50,37 @@ namespace EAD_project.Controllers
             {
                 using (var mydb = new MessManagmentContext())
                 {
-                    // Assume all records are for the same date
+                    // 1. Get Context: All records in this batch are for specific Date AND MealType
                     var targetDate = attendanceList.First().AttendanceDate;
+                    var targetMeal = attendanceList.First().MealType; // e.g., "Dinner"
 
-                    // Fetch existing records for these users and this date in ONE query
                     var userIds = attendanceList.Select(a => a.UserId).ToList();
+
+                    // 2. Fetch existing records matching User + Date + MealType
                     var existingRecords = await mydb.TblAttendances
-                        .Where(a => a.AttendanceDate == targetDate && userIds.Contains(a.UserId))
-                        .ToDictionaryAsync(a => a.UserId); // Use Dictionary for O(1) lookup
+                        .Where(a => a.AttendanceDate == targetDate
+                                 && a.MealType == targetMeal
+                                 && userIds.Contains(a.UserId))
+                        .ToDictionaryAsync(a => a.UserId);
 
                     foreach (var record in attendanceList)
                     {
                         if (existingRecords.TryGetValue(record.UserId, out var dbRecord))
                         {
-                            // UPDATE existing record
+                            // UPDATE
                             dbRecord.TeaWater = record.TeaWater;
                             dbRecord.Food = record.Food;
                             dbRecord.FoodPrice = record.FoodPrice;
+                            // MealType doesn't change during update
                         }
                         else
                         {
-                            // INSERT new record
+                            // INSERT
                             mydb.TblAttendances.Add(new TblAttendance
                             {
                                 UserId = record.UserId,
                                 AttendanceDate = record.AttendanceDate,
+                                MealType = record.MealType, // <--- SAVE MEAL TYPE
                                 TeaWater = record.TeaWater,
                                 Food = record.Food,
                                 FoodPrice = record.FoodPrice
@@ -81,7 +88,6 @@ namespace EAD_project.Controllers
                         }
                     }
 
-                    // Commit all changes in one SaveChangesAsync() call
                     await mydb.SaveChangesAsync();
                 }
 
@@ -92,6 +98,5 @@ namespace EAD_project.Controllers
                 return StatusCode(500, "Internal Server Error: " + ex.Message);
             }
         }
-
     }
 }

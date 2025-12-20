@@ -5,47 +5,42 @@
 // Global Variables
 let attendanceData = [];
 let selectedDate = new Date();
-let selectedMealType = 'Lunch';
+let selectedMealType = 'Lunch'; // Default
 
 // ========================================
 // 1. Initialize System
 // ========================================
 document.addEventListener('DOMContentLoaded', function () {
-    // Safety checks for Razor data
     if (typeof allMembers === 'undefined') allMembers = [];
     if (typeof todayMenu === 'undefined') todayMenu = [];
-    if (typeof attendances === 'undefined') attendances = []; // Check for existing attendance data
+    if (typeof attendances === 'undefined') attendances = [];
 
     initializeDatePicker();
     setupEventListeners();
 
     const currentDay = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
     displayMenu(currentDay);
-
     loadMembers();
 
-    // Sidebar toggle (Mobile Support)
+    // Sidebar Logic
     const sidebarToggle = document.getElementById('sidebarToggle');
-    const sidebar = document.querySelector('.sidebar');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function () {
-            sidebar.classList.toggle('show');
-            sidebarOverlay.classList.toggle('show');
+            document.querySelector('.sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
         });
     }
-
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
     if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', function () {
-            sidebar.classList.remove('show');
-            sidebarOverlay.classList.remove('show');
+            document.querySelector('.sidebar').classList.remove('show');
+            this.classList.remove('show');
         });
     }
 });
 
 // ========================================
-// 2. Date Picker & Formatting
+// 2. Date & Display Logic
 // ========================================
 function initializeDatePicker() {
     const dateInput = document.getElementById('attendanceDate');
@@ -67,14 +62,12 @@ function formatDateDisplay(date) {
 
 function updateDateDisplay() {
     document.getElementById('selectedDateDisplay').textContent = formatDateDisplay(selectedDate);
-
     const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
     document.getElementById('todayDayBadge').textContent = dayName;
 
     displayMenu(dayName);
     updateMealDisplay();
 
-    // Reload attendance when date changes to fetch correct data
     if (allMembers.length > 0) {
         loadAttendanceForDate();
     }
@@ -95,6 +88,7 @@ function updateMealDisplay() {
 // 3. Event Listeners
 // ========================================
 function setupEventListeners() {
+    // Date Navigation
     document.getElementById('prevDateBtn').addEventListener('click', () => {
         selectedDate.setDate(selectedDate.getDate() - 1);
         document.getElementById('attendanceDate').value = formatDateForInput(selectedDate);
@@ -118,11 +112,12 @@ function setupEventListeners() {
         updateDateDisplay();
     });
 
+    // Meal Type Change (Reloads data for specific meal)
     document.querySelectorAll('input[name="mealType"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             selectedMealType = e.target.value;
             updateMealDisplay();
-            loadAttendanceForDate();
+            loadAttendanceForDate(); // Reload when switching Lunch <-> Dinner
         });
     });
 
@@ -132,13 +127,13 @@ function setupEventListeners() {
 }
 
 // ========================================
-// 4. Data Loading (UPDATED LOGIC)
+// 4. Data Loading (UPDATED FOR MEAL TYPE)
 // ========================================
 async function loadMembers() {
     showLoading(true);
     try {
         if (!allMembers || allMembers.length === 0) {
-            console.warn("No members found in Model.");
+            console.warn("No members found.");
             showToast('No members found', 'warning');
         }
         loadAttendanceForDate();
@@ -151,50 +146,45 @@ async function loadMembers() {
 
 async function loadAttendanceForDate() {
     try {
-        // 1. Get the string format of the selected date (YYYY-MM-DD)
         const dateStr = formatDateForInput(selectedDate);
 
         attendanceData = allMembers.map(member => {
-            // Helpers for Case Insensitivity
             const mId = member.userId || member.UserId;
             const mName = member.name || member.Name;
             const mUser = member.username || member.Username;
             const mDept = member.department || member.Department;
 
-            // 2. Find if we have a record in the DB data ('attendances') for this User + Date
+            // 1. FIND EXISTING RECORD
+            // Match: UserID + Date + MealType
             const existingRecord = attendances.find(a => {
-                // Handle different C# date serializations
-                const dbDate = a.attendanceDate || a.AttendanceDate || a.date || a.Date;
+                const dbDate = a.attendanceDate || a.AttendanceDate;
                 const dbUserId = a.userId || a.UserId;
+                const dbMeal = a.mealType || a.MealType;
 
-                // Convert DB date to YYYY-MM-DD for comparison (Take first 10 chars)
                 const dbDateStr = dbDate ? dbDate.substring(0, 10) : "";
 
-                return dbUserId === mId && dbDateStr === dateStr;
+                return dbUserId === mId
+                    && dbDateStr === dateStr
+                    && dbMeal === selectedMealType; // <--- CRITICAL CHECK
             });
 
-            // 3. Determine Values (Use DB value if exists, else Default)
-
-            // ID
+            // 2. Set Values
             const attId = existingRecord ? (existingRecord.attendanceID || existingRecord.AttendanceID) : 0;
 
-            // Tea/Water (Default true for new records)
             const isTeaWater = existingRecord
                 ? (existingRecord.teaWater !== undefined ? existingRecord.teaWater : existingRecord.TeaWater)
                 : true;
 
-            // Food
             const isFood = existingRecord
                 ? (existingRecord.food !== undefined ? existingRecord.food : existingRecord.Food)
                 : false;
 
-            // Price
-            // If record exists, use DB price. If new, calculate based on flags.
+            // 3. Calculate Price Logic
             let finalPrice = 0;
             if (existingRecord) {
                 finalPrice = existingRecord.foodPrice || existingRecord.FoodPrice || 0;
             } else {
-                // New Record Calculation
+                // New Record Defaults
                 if (isFood) {
                     finalPrice = calculateMealPrice(selectedMealType);
                 } else if (isTeaWater) {
@@ -209,7 +199,7 @@ async function loadAttendanceForDate() {
                 username: mUser,
                 department: mDept,
                 date: dateStr,
-                mealType: selectedMealType,
+                mealType: selectedMealType, // Track current meal type
                 teaWater: isTeaWater,
                 food: isFood,
                 foodPrice: finalPrice
@@ -258,9 +248,7 @@ function renderAttendanceTable() {
             <td>${index + 1}</td>
             <td>
                 <div class="member-info">
-                    <div class="member-avatar">
-                        ${attendance.name.charAt(0).toUpperCase()}
-                    </div>
+                    <div class="member-avatar">${attendance.name.charAt(0).toUpperCase()}</div>
                     <div class="member-details">
                         <div class="member-name">${attendance.name}</div>
                         <div class="member-username">@${attendance.username}</div>
@@ -295,9 +283,8 @@ function renderAttendanceTable() {
 }
 
 // ========================================
-// 6. Checkbox Logic Handlers
+// 6. Checkbox Logic
 // ========================================
-
 function handleTeaCheckboxChange(e) {
     const userId = parseInt(e.target.dataset.userId);
     const isChecked = e.target.checked;
@@ -307,18 +294,12 @@ function handleTeaCheckboxChange(e) {
         attendance.teaWater = isChecked;
 
         if (!isChecked) {
-            // Case: Tea Unchecked -> Remove Everything
             attendance.food = false;
             attendance.foodPrice = 0;
-            const row = e.target.closest('tr');
-            row.querySelector('.food-checkbox').checked = false;
+            e.target.closest('tr').querySelector('.food-checkbox').checked = false;
         } else {
-            // Case: Tea Checked (Food is currently false) -> Apply Tea Price
-            if (!attendance.food) {
-                attendance.foodPrice = calculateTeaWaterCost();
-            }
+            if (!attendance.food) attendance.foodPrice = calculateTeaWaterCost();
         }
-
         updateRowStatus(e.target.closest('tr'), attendance);
         updateStatistics();
     }
@@ -333,20 +314,12 @@ function handleFoodCheckboxChange(e) {
         attendance.food = isChecked;
 
         if (isChecked) {
-            // Case: Food Checked -> Full Meal Price
             attendance.teaWater = true;
             attendance.foodPrice = calculateMealPrice(selectedMealType);
-            const row = e.target.closest('tr');
-            row.querySelector('.tea-checkbox').checked = true;
+            e.target.closest('tr').querySelector('.tea-checkbox').checked = true;
         } else {
-            // Case: Food Unchecked -> Fallback to Tea Price
-            if (attendance.teaWater) {
-                attendance.foodPrice = calculateTeaWaterCost();
-            } else {
-                attendance.foodPrice = 0;
-            }
+            attendance.foodPrice = attendance.teaWater ? calculateTeaWaterCost() : 0;
         }
-
         updateRowStatus(e.target.closest('tr'), attendance);
         updateStatistics();
     }
@@ -370,7 +343,7 @@ function updateRowStatus(row, attendance) {
 }
 
 // ========================================
-// 7. Save to Database
+// 7. Save to Database (UPDATED FOR MEAL TYPE)
 // ========================================
 async function saveAllAttendance() {
     const btn = document.getElementById('saveAllAttendanceBtn');
@@ -385,6 +358,7 @@ async function saveAllAttendance() {
             AttendanceID: a.attendanceId,
             UserId: a.userId,
             AttendanceDate: dateToSend,
+            MealType: selectedMealType, // <--- SENDING MEAL TYPE
             TeaWater: a.teaWater,
             Food: a.food,
             FoodPrice: a.foodPrice
@@ -400,37 +374,32 @@ async function saveAllAttendance() {
             throw new Error(await response.text());
         }
 
-        // --- UPDATE LOCAL DATA ---
-        // After successful save, we update our local 'attendances' array 
-        // so that if the user clicks other dates and comes back, the data is fresh.
-        // In a perfect world, we'd reload the page or fetch fresh data, 
-        // but updating the local array works for SPA-feel.
+        // Update local memory to reflect saved state
         attendanceRecords.forEach(savedRecord => {
-            // Find if record already exists in global 'attendances'
             const existingIdx = attendances.findIndex(att =>
                 (att.userId || att.UserId) === savedRecord.UserId &&
-                (att.attendanceDate || att.AttendanceDate).substring(0, 10) === savedRecord.AttendanceDate
+                (att.attendanceDate || att.AttendanceDate).substring(0, 10) === savedRecord.AttendanceDate &&
+                (att.mealType || att.MealType) === savedRecord.MealType
             );
 
             if (existingIdx > -1) {
-                // Update existing
                 attendances[existingIdx].teaWater = savedRecord.TeaWater;
                 attendances[existingIdx].food = savedRecord.Food;
                 attendances[existingIdx].foodPrice = savedRecord.FoodPrice;
             } else {
-                // Add new
                 attendances.push({
                     userId: savedRecord.UserId,
                     attendanceDate: savedRecord.AttendanceDate,
+                    mealType: savedRecord.MealType,
                     teaWater: savedRecord.TeaWater,
                     food: savedRecord.Food,
                     foodPrice: savedRecord.FoodPrice,
-                    attendanceID: 0 // We don't have the new ID unless API returns it, but 0 is fine for display
+                    attendanceID: 0
                 });
             }
         });
 
-        showToast(`Attendance saved successfully for ${dateToSend}!`, 'success');
+        showToast(`Attendance saved for ${selectedMealType} on ${dateToSend}!`, 'success');
 
     } catch (err) {
         console.error('Error saving attendance:', err);
@@ -444,7 +413,6 @@ async function saveAllAttendance() {
 // ========================================
 // 8. Menu & Price Logic
 // ========================================
-
 function displayMenu(dayName) {
     const getDay = (i) => i.dayOfWeek || i.DayOfWeek;
     const getMeal = (i) => i.mealType || i.MealType;
@@ -478,7 +446,6 @@ function displayMenu(dayName) {
     renderItems(dinnerItems, dinnerList, 'dinnerTotal');
 }
 
-// Helper: Calculate Tea/Water Cost
 function calculateTeaWaterCost() {
     const currentDayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
     const getDay = (i) => i.dayOfWeek || i.DayOfWeek;
@@ -505,9 +472,8 @@ function calculateMealPrice(mealType) {
 }
 
 // ========================================
-// 9. Helpers & Utilities
+// 9. UI Helpers
 // ========================================
-
 function markAllPresent() {
     const mealPrice = calculateMealPrice(selectedMealType);
     attendanceData.forEach(attendance => {
@@ -517,7 +483,7 @@ function markAllPresent() {
     });
     renderAttendanceTable();
     updateStatistics();
-    showToast(`All members marked present`, 'success');
+    showToast(`All marked present for ${selectedMealType}`, 'success');
 }
 
 function filterAttendance() {
@@ -529,7 +495,6 @@ function filterAttendance() {
         const name = row.querySelector('.member-name').textContent.toLowerCase();
         const username = row.querySelector('.member-username').textContent.toLowerCase();
         const department = row.cells[3].textContent.toLowerCase();
-
         if (name.includes(searchTerm) || username.includes(searchTerm) || department.includes(searchTerm)) {
             row.style.display = '';
             visibleCount++;
@@ -548,19 +513,12 @@ function updateStatistics() {
 }
 
 function showLoading(show) {
-    const loadingState = document.getElementById('loadingState');
-    const tableBody = document.getElementById('attendanceTableBody');
-    if (show) {
-        loadingState.style.display = 'block';
-        tableBody.innerHTML = '';
-    } else {
-        loadingState.style.display = 'none';
-    }
+    document.getElementById('loadingState').style.display = show ? 'block' : 'none';
+    if (show) document.getElementById('attendanceTableBody').innerHTML = '';
 }
 
 function showEmptyState(show) {
-    const emptyState = document.getElementById('emptyState');
-    emptyState.style.display = show ? 'block' : 'none';
+    document.getElementById('emptyState').style.display = show ? 'block' : 'none';
 }
 
 function showToast(message, type = 'success') {
@@ -572,11 +530,7 @@ function showToast(message, type = 'success') {
     }
     const toast = document.createElement('div');
     toast.className = `toast toast-${type} show`;
-    toast.innerHTML = `
-        <div class="toast-body d-flex align-items-center justify-content-between p-3">
-            <span><i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'exclamation-circle'} me-2"></i>${message}</span>
-            <button type="button" class="btn-close btn-close-white ms-3" onclick="this.parentElement.parentElement.remove()"></button>
-        </div>`;
+    toast.innerHTML = `<div class="toast-body p-3"><span><i class="bi bi-info-circle me-2"></i>${message}</span></div>`;
     toastContainer.appendChild(toast);
     setTimeout(() => { toast.remove(); }, 3000);
 }
