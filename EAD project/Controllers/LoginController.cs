@@ -11,24 +11,7 @@ namespace EAD_project.Controllers
             return View();
         }
         [HttpPost]
-        //public IActionResult check(string name, string password)
-        //{
-        //    using (MessManagmentContext mydb = new MessManagmentContext())
-        //    {
-        //        var user = mydb.TblUsers.Where(row => row.Username == name && row.PasswordHash == password && row.Role == "Admin");
 
-        //        if (user != null)
-        //        {
-        //            return RedirectToAction("Admindashboard", "Admin");
-        //        }
-        //        else
-        //        {
-        //            return RedirectToAction("login");
-        //        }
-
-        //    }
-
-        //}
         public IActionResult check(string name, string password)
         {
             using (MessManagmentContext mydb = new MessManagmentContext())

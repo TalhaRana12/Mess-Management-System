@@ -149,7 +149,7 @@ async function loadAttendanceForDate() {
         const dateStr = formatDateForInput(selectedDate);
 
         attendanceData = allMembers.map(member => {
-            const mId = member.userId || member.UserId;
+            const mId = member.userId || member.UserId; 
             const mName = member.name || member.Name;
             const mUser = member.username || member.Username;
             const mDept = member.department || member.Department;
@@ -162,21 +162,21 @@ async function loadAttendanceForDate() {
                 const dbMeal = a.mealType || a.MealType;
 
                 const dbDateStr = dbDate ? dbDate.substring(0, 10) : "";
-
-                return dbUserId === mId
-                    && dbDateStr === dateStr
+                
+                return dbUserId === mId 
+                    && dbDateStr === dateStr 
                     && dbMeal === selectedMealType; // <--- CRITICAL CHECK
             });
 
             // 2. Set Values
             const attId = existingRecord ? (existingRecord.attendanceID || existingRecord.AttendanceID) : 0;
-
-            const isTeaWater = existingRecord
-                ? (existingRecord.teaWater !== undefined ? existingRecord.teaWater : existingRecord.TeaWater)
-                : true;
-
-            const isFood = existingRecord
-                ? (existingRecord.food !== undefined ? existingRecord.food : existingRecord.Food)
+            
+            const isTeaWater = existingRecord 
+                ? (existingRecord.teaWater !== undefined ? existingRecord.teaWater : existingRecord.TeaWater) 
+                : true; 
+            
+            const isFood = existingRecord 
+                ? (existingRecord.food !== undefined ? existingRecord.food : existingRecord.Food) 
                 : false;
 
             // 3. Calculate Price Logic
@@ -376,27 +376,27 @@ async function saveAllAttendance() {
 
         // Update local memory to reflect saved state
         attendanceRecords.forEach(savedRecord => {
-            const existingIdx = attendances.findIndex(att =>
-                (att.userId || att.UserId) === savedRecord.UserId &&
-                (att.attendanceDate || att.AttendanceDate).substring(0, 10) === savedRecord.AttendanceDate &&
+             const existingIdx = attendances.findIndex(att => 
+                (att.userId || att.UserId) === savedRecord.UserId && 
+                (att.attendanceDate || att.AttendanceDate).substring(0,10) === savedRecord.AttendanceDate &&
                 (att.mealType || att.MealType) === savedRecord.MealType
-            );
+             );
 
-            if (existingIdx > -1) {
-                attendances[existingIdx].teaWater = savedRecord.TeaWater;
-                attendances[existingIdx].food = savedRecord.Food;
-                attendances[existingIdx].foodPrice = savedRecord.FoodPrice;
-            } else {
-                attendances.push({
-                    userId: savedRecord.UserId,
-                    attendanceDate: savedRecord.AttendanceDate,
-                    mealType: savedRecord.MealType,
-                    teaWater: savedRecord.TeaWater,
-                    food: savedRecord.Food,
-                    foodPrice: savedRecord.FoodPrice,
-                    attendanceID: 0
-                });
-            }
+             if (existingIdx > -1) {
+                 attendances[existingIdx].teaWater = savedRecord.TeaWater;
+                 attendances[existingIdx].food = savedRecord.Food;
+                 attendances[existingIdx].foodPrice = savedRecord.FoodPrice;
+             } else {
+                 attendances.push({
+                     userId: savedRecord.UserId,
+                     attendanceDate: savedRecord.AttendanceDate,
+                     mealType: savedRecord.MealType,
+                     teaWater: savedRecord.TeaWater,
+                     food: savedRecord.Food,
+                     foodPrice: savedRecord.FoodPrice,
+                     attendanceID: 0
+                 });
+             }
         });
 
         showToast(`Attendance saved for ${selectedMealType} on ${dateToSend}!`, 'success');
@@ -514,7 +514,7 @@ function updateStatistics() {
 
 function showLoading(show) {
     document.getElementById('loadingState').style.display = show ? 'block' : 'none';
-    if (show) document.getElementById('attendanceTableBody').innerHTML = '';
+    if(show) document.getElementById('attendanceTableBody').innerHTML = '';
 }
 
 function showEmptyState(show) {

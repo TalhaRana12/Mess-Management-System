@@ -46,5 +46,66 @@ namespace EAD_project.Controllers
                 return View(viewModel);
             }
         }
+        [HttpPost]
+        public async Task<IActionResult> SaveBillsApi([FromBody] List<TblBill> billList)
+        {
+            if (billList == null || billList.Count == 0)
+                return BadRequest("No bill data received.");
+
+            try
+            {
+                using (var mydb = new MessManagmentContext())
+                {
+                    // 1. Context: We assume bills are generated for a specific Month and Year
+                    var targetMonth = billList.First().Month;
+                    var targetYear = billList.First().Year;
+                    var userIds = billList.Select(b => b.UserId).ToList();
+
+                    // 2. Fetch existing bills for these users in this specific Month/Year
+                    var existingBills = await mydb.TblBills
+                        .Where(b => b.Month == targetMonth
+                                 && b.Year == targetYear
+                                 && userIds.Contains(b.UserId))
+                        .ToDictionaryAsync(b => b.UserId);
+
+                    foreach (var bill in billList)
+                    {
+                        if (existingBills.TryGetValue(bill.UserId, out var dbBill))
+                        {
+                            // --- UPDATE EXISTING BILL ---
+                            dbBill.TotalTeaWaterAmount = bill.TotalTeaWaterAmount;
+                            dbBill.TotalFoodAmount = bill.TotalFoodAmount;
+                            dbBill.GrandTotal = bill.GrandTotal;
+                            // Note: We usually don't overwrite 'IsPaid' during re-computation 
+                            // unless you want to reset it. Assuming we keep payment status:
+                            // dbBill.IsPaid = bill.IsPaid; 
+                        }
+                        else
+                        {
+                            // --- INSERT NEW BILL ---
+                            mydb.TblBills.Add(new TblBill
+                            {
+                                UserId = bill.UserId,
+                                Month = bill.Month,
+                                Year = bill.Year,
+                                TotalTeaWaterAmount = bill.TotalTeaWaterAmount,
+                                TotalFoodAmount = bill.TotalFoodAmount,
+                                GrandTotal = bill.GrandTotal,
+                                IsPaid = false, // Default to unpaid
+                                PdfPath = ""    // Optional
+                            });
+                        }
+                    }
+
+                    await mydb.SaveChangesAsync();
+                }
+
+                return Ok("Bills computed and saved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal Server Error: " + ex.Message);
+            }
+        }
     }
 }

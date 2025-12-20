@@ -1,12 +1,13 @@
 ﻿/* Import Dashboard Base Styles */
-@import url('dashboard.css');
+@import url('Admindashboard.css');
 
 /* Body & General */
 body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
-    background: #f8f9fa;
+/*    background: #f8f9fa;*/
+background:yellow;
 }
 
 /* Bill Action Cards */
