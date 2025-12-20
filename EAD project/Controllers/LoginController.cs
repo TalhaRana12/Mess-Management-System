@@ -13,7 +13,7 @@ namespace EAD_project.Controllers
         [HttpPost]
         //public IActionResult check(string name, string password)
         //{
-        //    using (MessDbContext mydb = new MessDbContext())
+        //    using (MessManagmentContext mydb = new MessManagmentContext())
         //    {
         //        var user = mydb.TblUsers.Where(row => row.Username == name && row.PasswordHash == password && row.Role == "Admin");
 
@@ -31,7 +31,7 @@ namespace EAD_project.Controllers
         //}
         public IActionResult check(string name, string password)
         {
-            using (MessDbContext mydb = new MessDbContext())
+            using (MessManagmentContext mydb = new MessManagmentContext())
             {
                 // Use FirstOrDefault instead of Where
                 var user = mydb.TblUsers.FirstOrDefault(row => row.Username == name && row.PasswordHash == password && row.Role == "Admin");

@@ -18,7 +18,7 @@ namespace EAD_project.Controllers
             if (data == null)
                 return BadRequest("Invalid data");
 
-            using (MessDbContext mydb = new MessDbContext())
+            using (MessManagmentContext mydb = new MessManagmentContext())
             {
                 // Check duplicate username
                 if (await mydb.TblUsers.AnyAsync(x => x.Username == data.Username))

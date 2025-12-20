@@ -12,22 +12,9 @@ namespace EAD_project.Controllers
             public List<TblUser> user;
             public List<TblAttendance> attendances;
         }
-        //public async Task<IActionResult> attendance()
-        //{
-        //    using (MessDbContext mydb=new MessDbContext())
-        //    {
-        //        var viewModel = new MemberMenuViewModel
-        //        {
-        //            menu = await mydb.TblMenus.ToListAsync(),
-        //            user = await mydb.TblUsers.ToListAsync(),
-        //            attendances= await mydb.TblAttendances.ToListAsync()
-        //        };
-        //        return View(viewModel);
-        //    }
-        //}
         public async Task<IActionResult> attendance()
         {
-            using (MessDbContext mydb = new MessDbContext())
+            using (MessManagmentContext mydb = new MessManagmentContext())
             {
                 var viewModel = new MemberMenuViewModel
                 {
@@ -60,7 +47,7 @@ namespace EAD_project.Controllers
 
             try
             {
-                using (var mydb = new MessDbContext())
+                using (var mydb = new MessManagmentContext())
                 {
                     // Assume all records are for the same date
                     var targetDate = attendanceList.First().AttendanceDate;

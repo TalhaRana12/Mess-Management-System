@@ -11,13 +11,13 @@ namespace EAD_project.Controllers
         {
             List<TblUser> temp;
 
-            using (MessDbContext mydb = new MessDbContext())
+            using (MessManagmentContext mydb = new MessManagmentContext())
             {
                 // Use await and ToListAsync() to unblock the thread while fetching data
                 temp = await mydb.TblUsers.ToListAsync();
             }
 
-            
+
 
             return View(temp);
         }
@@ -28,7 +28,7 @@ namespace EAD_project.Controllers
             if (updatedUser == null || updatedUser.UserId == 0)
                 return BadRequest("Invalid data received.");
 
-            using (MessDbContext mydb = new MessDbContext())
+            using (MessManagmentContext mydb = new MessManagmentContext())
             {
                 // Find existing user by primary key
                 var existingUser = await mydb.TblUsers
@@ -65,7 +65,7 @@ namespace EAD_project.Controllers
             if (userId <= 0)
                 return BadRequest("Invalid user ID");
 
-            using (MessDbContext mydb = new MessDbContext())
+            using (MessManagmentContext mydb = new MessManagmentContext())
             {
                 var user = await mydb.TblUsers.FirstOrDefaultAsync(x => x.UserId == userId);
 

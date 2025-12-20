@@ -8,7 +8,7 @@ namespace EAD_project.Controllers
         public async Task<IActionResult> menu()
         {
             List<TblMenu> temp;
-            using(MessDbContext mydb=new MessDbContext())
+            using (MessManagmentContext mydb = new MessManagmentContext())
             {
                 temp = await mydb.TblMenus.ToListAsync();
             }
@@ -23,7 +23,7 @@ namespace EAD_project.Controllers
 
             string day = menuItems.First().DayOfWeek;
 
-            using (MessDbContext mydb = new MessDbContext())
+            using (MessManagmentContext mydb = new MessManagmentContext())
             using (var transaction = await mydb.Database.BeginTransactionAsync())
             {
                 try
