@@ -10,19 +10,48 @@ namespace EAD_project.Controllers
         {
             public List<TblMenu> menu;
             public List<TblUser> user;
+            public List<TblAttendance> attendances;
         }
+        //public async Task<IActionResult> attendance()
+        //{
+        //    using (MessDbContext mydb=new MessDbContext())
+        //    {
+        //        var viewModel = new MemberMenuViewModel
+        //        {
+        //            menu = await mydb.TblMenus.ToListAsync(),
+        //            user = await mydb.TblUsers.ToListAsync(),
+        //            attendances= await mydb.TblAttendances.ToListAsync()
+        //        };
+        //        return View(viewModel);
+        //    }
+        //}
         public async Task<IActionResult> attendance()
         {
-            using (MessDbContext mydb=new MessDbContext())
+            using (MessDbContext mydb = new MessDbContext())
             {
                 var viewModel = new MemberMenuViewModel
                 {
                     menu = await mydb.TblMenus.ToListAsync(),
-                    user = await mydb.TblUsers.ToListAsync()
+                    user = await mydb.TblUsers.ToListAsync(),
+
+                    // FIX: Select into a new object to break the circular link to 'User'
+                    attendances = await mydb.TblAttendances
+                        .Select(a => new TblAttendance
+                        {
+                            AttendanceId = a.AttendanceId,
+                            UserId = a.UserId,
+                            AttendanceDate = a.AttendanceDate,
+                            TeaWater = a.TeaWater,
+                            Food = a.Food,
+                            FoodPrice = a.FoodPrice
+                            // We deliberately do NOT include 'User' or 'TblRequests' here
+                        })
+                        .ToListAsync()
                 };
                 return View(viewModel);
             }
         }
+
         [HttpPost]
         public async Task<IActionResult> save_api([FromBody] List<TblAttendance> attendanceList)
         {

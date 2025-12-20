@@ -299,6 +299,7 @@
     <script>
         let allMembers=@Html.Raw(Json.Serialize(Model.user));
         let todayMenu=@Html.Raw(Json.Serialize(Model.menu));
+        let attendances= @Html.Raw(Json.Serialize(Model.attendances));
     </script>
     <script src="~/js/attendance.js"></script>
 </body>

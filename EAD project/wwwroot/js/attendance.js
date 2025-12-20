@@ -11,16 +11,17 @@ let selectedMealType = 'Lunch';
 // 1. Initialize System
 // ========================================
 document.addEventListener('DOMContentLoaded', function () {
-    // Safety check: Ensure Razor data exists
+    // Safety checks for Razor data
     if (typeof allMembers === 'undefined') allMembers = [];
     if (typeof todayMenu === 'undefined') todayMenu = [];
+    if (typeof attendances === 'undefined') attendances = []; // Check for existing attendance data
 
     initializeDatePicker();
     setupEventListeners();
 
-    // Initial Load
     const currentDay = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
     displayMenu(currentDay);
+
     loadMembers();
 
     // Sidebar toggle (Mobile Support)
@@ -52,7 +53,6 @@ function initializeDatePicker() {
     updateDateDisplay();
 }
 
-// CRITICAL: This fixes the 1/1/0001 bug by ensuring strict YYYY-MM-DD format
 function formatDateForInput(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -74,6 +74,7 @@ function updateDateDisplay() {
     displayMenu(dayName);
     updateMealDisplay();
 
+    // Reload attendance when date changes to fetch correct data
     if (allMembers.length > 0) {
         loadAttendanceForDate();
     }
@@ -131,7 +132,7 @@ function setupEventListeners() {
 }
 
 // ========================================
-// 4. Data Loading
+// 4. Data Loading (UPDATED LOGIC)
 // ========================================
 async function loadMembers() {
     showLoading(true);
@@ -150,34 +151,59 @@ async function loadMembers() {
 
 async function loadAttendanceForDate() {
     try {
+        // 1. Get the string format of the selected date (YYYY-MM-DD)
         const dateStr = formatDateForInput(selectedDate);
-        const existingAttendance = []; // In real app: await fetch(...)
 
         attendanceData = allMembers.map(member => {
+            // Helpers for Case Insensitivity
             const mId = member.userId || member.UserId;
             const mName = member.name || member.Name;
             const mUser = member.username || member.Username;
             const mDept = member.department || member.Department;
 
-            const existing = existingAttendance.find(a => a.userId === mId && a.mealType === selectedMealType);
+            // 2. Find if we have a record in the DB data ('attendances') for this User + Date
+            const existingRecord = attendances.find(a => {
+                // Handle different C# date serializations
+                const dbDate = a.attendanceDate || a.AttendanceDate || a.date || a.Date;
+                const dbUserId = a.userId || a.UserId;
 
-            // Determine initial status
-            const isTeaWater = existing?.teaWater !== undefined ? existing.teaWater : true;
-            const isFood = existing?.food || false;
+                // Convert DB date to YYYY-MM-DD for comparison (Take first 10 chars)
+                const dbDateStr = dbDate ? dbDate.substring(0, 10) : "";
 
-            // --- PRICE CALCULATION LOGIC ---
-            let initialPrice = 0;
-            if (isFood) {
-                // If Food is checked -> Full Meal Price
-                initialPrice = calculateMealPrice(selectedMealType);
-            } else if (isTeaWater) {
-                // If Food Unchecked but Tea Checked -> Tea Price
-                initialPrice = calculateTeaWaterCost();
+                return dbUserId === mId && dbDateStr === dateStr;
+            });
+
+            // 3. Determine Values (Use DB value if exists, else Default)
+
+            // ID
+            const attId = existingRecord ? (existingRecord.attendanceID || existingRecord.AttendanceID) : 0;
+
+            // Tea/Water (Default true for new records)
+            const isTeaWater = existingRecord
+                ? (existingRecord.teaWater !== undefined ? existingRecord.teaWater : existingRecord.TeaWater)
+                : true;
+
+            // Food
+            const isFood = existingRecord
+                ? (existingRecord.food !== undefined ? existingRecord.food : existingRecord.Food)
+                : false;
+
+            // Price
+            // If record exists, use DB price. If new, calculate based on flags.
+            let finalPrice = 0;
+            if (existingRecord) {
+                finalPrice = existingRecord.foodPrice || existingRecord.FoodPrice || 0;
+            } else {
+                // New Record Calculation
+                if (isFood) {
+                    finalPrice = calculateMealPrice(selectedMealType);
+                } else if (isTeaWater) {
+                    finalPrice = calculateTeaWaterCost();
+                }
             }
-            // -------------------------------
 
             return {
-                attendanceId: existing?.attendanceId || 0,
+                attendanceId: attId,
                 userId: mId,
                 name: mName,
                 username: mUser,
@@ -186,7 +212,7 @@ async function loadAttendanceForDate() {
                 mealType: selectedMealType,
                 teaWater: isTeaWater,
                 food: isFood,
-                foodPrice: existing?.foodPrice || initialPrice
+                foodPrice: finalPrice
             };
         });
 
@@ -232,7 +258,9 @@ function renderAttendanceTable() {
             <td>${index + 1}</td>
             <td>
                 <div class="member-info">
-                    <div class="member-avatar">${attendance.name.charAt(0).toUpperCase()}</div>
+                    <div class="member-avatar">
+                        ${attendance.name.charAt(0).toUpperCase()}
+                    </div>
                     <div class="member-details">
                         <div class="member-name">${attendance.name}</div>
                         <div class="member-username">@${attendance.username}</div>
@@ -267,10 +295,9 @@ function renderAttendanceTable() {
 }
 
 // ========================================
-// 6. Checkbox Logic Handlers (PRICE LOGIC UPDATED)
+// 6. Checkbox Logic Handlers
 // ========================================
 
-// Handle Tea/Water Checkbox
 function handleTeaCheckboxChange(e) {
     const userId = parseInt(e.target.dataset.userId);
     const isChecked = e.target.checked;
@@ -283,13 +310,10 @@ function handleTeaCheckboxChange(e) {
             // Case: Tea Unchecked -> Remove Everything
             attendance.food = false;
             attendance.foodPrice = 0;
-
-            // Visual update
             const row = e.target.closest('tr');
             row.querySelector('.food-checkbox').checked = false;
         } else {
-            // Case: Tea Checked. 
-            // If Food is NOT checked, we must apply Tea Price.
+            // Case: Tea Checked (Food is currently false) -> Apply Tea Price
             if (!attendance.food) {
                 attendance.foodPrice = calculateTeaWaterCost();
             }
@@ -300,7 +324,6 @@ function handleTeaCheckboxChange(e) {
     }
 }
 
-// Handle Food Checkbox
 function handleFoodCheckboxChange(e) {
     const userId = parseInt(e.target.dataset.userId);
     const isChecked = e.target.checked;
@@ -313,12 +336,10 @@ function handleFoodCheckboxChange(e) {
             // Case: Food Checked -> Full Meal Price
             attendance.teaWater = true;
             attendance.foodPrice = calculateMealPrice(selectedMealType);
-
-            // Visual update
             const row = e.target.closest('tr');
             row.querySelector('.tea-checkbox').checked = true;
         } else {
-            // Case: Food Unchecked -> Fallback to Tea Price if Tea is checked
+            // Case: Food Unchecked -> Fallback to Tea Price
             if (attendance.teaWater) {
                 attendance.foodPrice = calculateTeaWaterCost();
             } else {
@@ -358,14 +379,12 @@ async function saveAllAttendance() {
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
 
-        // 1. Force strict Date format to fix 1/1/0001 error
         const dateToSend = formatDateForInput(selectedDate);
 
-        // 2. Map data (Property names must match C# Class exactly)
         const attendanceRecords = attendanceData.map(a => ({
             AttendanceID: a.attendanceId,
             UserId: a.userId,
-            AttendanceDate: dateToSend, // Matches C# "AttendanceDate"
+            AttendanceDate: dateToSend,
             TeaWater: a.teaWater,
             Food: a.food,
             FoodPrice: a.foodPrice
@@ -380,6 +399,36 @@ async function saveAllAttendance() {
         if (!response.ok) {
             throw new Error(await response.text());
         }
+
+        // --- UPDATE LOCAL DATA ---
+        // After successful save, we update our local 'attendances' array 
+        // so that if the user clicks other dates and comes back, the data is fresh.
+        // In a perfect world, we'd reload the page or fetch fresh data, 
+        // but updating the local array works for SPA-feel.
+        attendanceRecords.forEach(savedRecord => {
+            // Find if record already exists in global 'attendances'
+            const existingIdx = attendances.findIndex(att =>
+                (att.userId || att.UserId) === savedRecord.UserId &&
+                (att.attendanceDate || att.AttendanceDate).substring(0, 10) === savedRecord.AttendanceDate
+            );
+
+            if (existingIdx > -1) {
+                // Update existing
+                attendances[existingIdx].teaWater = savedRecord.TeaWater;
+                attendances[existingIdx].food = savedRecord.Food;
+                attendances[existingIdx].foodPrice = savedRecord.FoodPrice;
+            } else {
+                // Add new
+                attendances.push({
+                    userId: savedRecord.UserId,
+                    attendanceDate: savedRecord.AttendanceDate,
+                    teaWater: savedRecord.TeaWater,
+                    food: savedRecord.Food,
+                    foodPrice: savedRecord.FoodPrice,
+                    attendanceID: 0 // We don't have the new ID unless API returns it, but 0 is fine for display
+                });
+            }
+        });
 
         showToast(`Attendance saved successfully for ${dateToSend}!`, 'success');
 
@@ -403,7 +452,6 @@ function displayMenu(dayName) {
     const getPrice = (i) => i.price || i.Price;
 
     const itemsForToday = todayMenu.filter(m => getDay(m) === dayName);
-
     const lunchItems = itemsForToday.filter(m => getMeal(m) === 'Lunch');
     const dinnerItems = itemsForToday.filter(m => getMeal(m) === 'Dinner');
 
@@ -430,20 +478,16 @@ function displayMenu(dayName) {
     renderItems(dinnerItems, dinnerList, 'dinnerTotal');
 }
 
-// ----------------------------------------------------
-// Helper: Calculate Tea/Water Cost Only
-// ----------------------------------------------------
+// Helper: Calculate Tea/Water Cost
 function calculateTeaWaterCost() {
     const currentDayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
     const getDay = (i) => i.dayOfWeek || i.DayOfWeek;
     const getDish = (i) => i.dishName || i.DishName;
     const getPrice = (i) => i.price || i.Price;
 
-    // Filter for items with 'tea', 'chai', or 'water' in the name for TODAY
     const teaWaterItems = todayMenu.filter(m => {
         const dayMatch = getDay(m) === currentDayName;
         const name = (getDish(m) || "").toLowerCase();
-        // Adjust keywords based on your DB dish names
         return dayMatch && (name.includes('tea') || name.includes('chai') || name.includes('water'));
     });
 
