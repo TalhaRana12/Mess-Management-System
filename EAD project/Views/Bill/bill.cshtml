@@ -1,0 +1,435 @@
+﻿@{
+	Layout = null;
+}
+@using EAD_project.Controllers
+@model ViewModel
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mess Management - Bills</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/bill.css">
+</head>
+<body>
+
+    <div class="dashboard-wrapper">
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3><i class="bi bi-egg-fried me-2"></i>MessHub</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashborad.html" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+                <a href="members.html" class="nav-link"><i class="bi bi-people-fill"></i> Members</a>
+                <a href="attendance.html" class="nav-link"><i class="bi bi-calendar-check-fill"></i> Attendance</a>
+                <a href="menu.html" class="nav-link"><i class="bi bi-journal-text"></i> Menu</a>
+                <a href="bills.html" class="nav-link active"><i class="bi bi-receipt"></i> Bills</a>
+                <a href="#" class="nav-link"><i class="bi bi-exclamation-triangle-fill"></i> Disputes</a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="login.html" class="nav-link"><i class="bi bi-box-arrow-left"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navbar -->
+            <header class="top-navbar">
+                <button class="btn sidebar-toggle d-lg-none" id="sidebarToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h4 class="page-title">Bills Management</h4>
+                <div class="navbar-right">
+                    <span class="user-greeting">Hello, <strong>Admin</strong></span>
+                    <div class="user-avatar">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Bills Content -->
+            <div class="dashboard-content">
+                <!-- Bill Generation Section -->
+                <div class="row g-4 mb-4">
+                    <div class="col-12 col-lg-6">
+                        <div class="card bill-action-card">
+                            <div class="card-body">
+                                <div class="action-icon">
+                                    <i class="bi bi-calculator-fill text-success"></i>
+                                </div>
+                                <h5 class="card-title">Generate All Bills</h5>
+                                <p class="card-text">Calculate and generate bills for all members for selected month</p>
+                                <div class="month-year-selector">
+                                    <select id="generateMonth" class="form-select">
+                                        <option value="1">January</option>
+                                        <option value="2">February</option>
+                                        <option value="3">March</option>
+                                        <option value="4">April</option>
+                                        <option value="5">May</option>
+                                        <option value="6">June</option>
+                                        <option value="7">July</option>
+                                        <option value="8">August</option>
+                                        <option value="9">September</option>
+                                        <option value="10">October</option>
+                                        <option value="11">November</option>
+                                        <option value="12">December</option>
+                                    </select>
+                                    <select id="generateYear" class="form-select">
+                                        <option value="2024">2024</option>
+                                        <option value="2025" selected>2025</option>
+                                        <option value="2026">2026</option>
+                                    </select>
+                                </div>
+                                <div class="mt-3">
+                                    <label for="generateServiceFee" class="form-label"><small>Mess Service Fee (Rs.)</small></label>
+                                    <input type="number" class="form-control" id="generateServiceFee" placeholder="Enter service fee" value="500" min="0">
+                                </div>
+                                <button class="btn btn-success w-100 mt-3" id="generateAllBillsBtn">
+                                    <i class="bi bi-calculator me-2"></i>Compute All Bills
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6">
+                        <div class="card bill-action-card">
+                            <div class="card-body">
+                                <div class="action-icon">
+                                    <i class="bi bi-person-search text-primary"></i>
+                                </div>
+                                <h5 class="card-title">Search Individual Bill</h5>
+                                <p class="card-text">Search and generate bill for a specific member</p>
+                                <div class="search-member-wrapper">
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" class="form-control" id="searchMemberInput" placeholder="Search by name or username...">
+                                    </div>
+                                    <div class="member-suggestions" id="memberSuggestions"></div>
+                                    <div class="month-year-selector mt-2">
+                                        <select id="searchMonth" class="form-select">
+                                            <option value="1">January</option>
+                                            <option value="2">February</option>
+                                            <option value="3">March</option>
+                                            <option value="4">April</option>
+                                            <option value="5">May</option>
+                                            <option value="6">June</option>
+                                            <option value="7">July</option>
+                                            <option value="8">August</option>
+                                            <option value="9">September</option>
+                                            <option value="10">October</option>
+                                            <option value="11">November</option>
+                                            <option value="12">December</option>
+                                        </select>
+                                        <select id="searchYear" class="form-select">
+                                            <option value="2024">2024</option>
+                                            <option value="2025" selected>2025</option>
+                                            <option value="2026">2026</option>
+                                        </select>
+                                    </div>
+                                    <div class="mt-3">
+                                        <label for="searchServiceFee" class="form-label"><small>Mess Service Fee (Rs.)</small></label>
+                                        <input type="number" class="form-control" id="searchServiceFee" placeholder="Enter service fee" value="500" min="0">
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary w-100 mt-3" id="searchBillBtn" disabled>
+                                    <i class="bi bi-receipt me-2"></i>View Bill
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="mini-stat-card">
+                            <div class="mini-stat-icon bg-primary-light">
+                                <i class="bi bi-receipt-cutoff text-primary"></i>
+                            </div>
+                            <div class="mini-stat-info">
+                                <h4 id="totalBills">0</h4>
+                                <p>Total Bills</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="mini-stat-card">
+                            <div class="mini-stat-icon bg-success-light">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            </div>
+                            <div class="mini-stat-info">
+                                <h4 id="paidBills">0</h4>
+                                <p>Paid Bills</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="mini-stat-card">
+                            <div class="mini-stat-icon bg-danger-light">
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                            </div>
+                            <div class="mini-stat-info">
+                                <h4 id="unpaidBills">0</h4>
+                                <p>Unpaid Bills</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="mini-stat-card">
+                            <div class="mini-stat-icon bg-warning-light">
+                                <i class="bi bi-currency-dollar text-warning"></i>
+                            </div>
+                            <div class="mini-stat-info">
+                                <h4 id="totalAmount">Rs. 0</h4>
+                                <p>Total Amount</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="filter-section">
+                    <div class="filter-controls">
+                        <div class="filter-group">
+                            <label>Filter by Month:</label>
+                            <select id="filterMonth" class="form-select">
+                                <option value="">All Months</option>
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Filter by Year:</label>
+                            <select id="filterYear" class="form-select">
+                                <option value="">All Years</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Payment Status:</label>
+                            <select id="filterStatus" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="paid">Paid</option>
+                                <option value="unpaid">Unpaid</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Search:</label>
+                            <div class="search-box-inline">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="searchBills" placeholder="Search member...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bills Table Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-table me-2"></i>All Bills</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table bills-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Member Name</th>
+                                        <th>Username</th>
+                                        <th>Month/Year</th>
+                                        <th>Grand Total</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="billsTableBody">
+                                    <!-- Bills will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Empty State -->
+                        <div class="empty-state" id="emptyState" style="display: none;">
+                            <i class="bi bi-receipt"></i>
+                            <h5>No Bills Found</h5>
+                            <p>No bills match your search criteria.</p>
+                        </div>
+                        <!-- Loading State -->
+                        <div class="loading-state" id="loadingState">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Loading bills...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- View Bill Modal -->
+    <div class="modal fade" id="viewBillModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="bi bi-receipt me-2"></i>Bill Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Bill Header -->
+                    <div class="bill-header">
+                        <div class="bill-logo">
+                            <i class="bi bi-egg-fried"></i>
+                            <h3>MessHub</h3>
+                        </div>
+                        <div class="bill-info">
+                            <p><strong>Bill ID:</strong> <span id="billId">-</span></p>
+                            <p><strong>Date:</strong> <span id="billDate">-</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Member Info -->
+                    <div class="bill-member-info">
+                        <h6>Bill To:</h6>
+                        <p class="mb-1"><strong id="billMemberName">-</strong></p>
+                        <p class="mb-1">Username: <span id="billMemberUsername">-</span></p>
+                        <p class="mb-1">Department: <span id="billMemberDepartment">-</span></p>
+                    </div>
+
+                    <!-- Bill Period -->
+                    <div class="bill-period">
+                        <h6>Billing Period:</h6>
+                        <p id="billPeriod">-</p>
+                    </div>
+
+                    <!-- Attendance Details -->
+                    <div class="bill-attendance-details">
+                        <h6>Attendance Summary</h6>
+                        <div class="table-wrapper-horizontal">
+                            <table class="table table-sm table-bordered table-horizontal">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Meal Type</th>
+                                        <th>Tea/Water</th>
+                                        <th>Food</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="billAttendanceBody">
+                                    <!-- Attendance details will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Bill Summary -->
+                    <div class="bill-summary">
+                        <div class="summary-row">
+                            <span>Tea/Water Charges:</span>
+                            <span id="billTeaWaterAmount">Rs. 0</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Food Charges:</span>
+                            <span id="billFoodAmount">Rs. 0</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span id="billSubtotal">Rs. 0</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Mess Service Fee:</span>
+                            <span id="billServiceFee">Rs. 0</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span><strong>Grand Total:</strong></span>
+                            <span><strong id="billGrandTotal">Rs. 0</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Status -->
+                    <div class="payment-status">
+                        <span>Payment Status:</span>
+                        <span class="badge" id="billPaymentStatus">Unpaid</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="downloadBillBtn">
+                        <i class="bi bi-download me-2"></i>Download PDF
+                    </button>
+                    <button type="button" class="btn btn-primary" id="sendBillBtn">
+                        <i class="bi bi-send me-2"></i>Send to Member
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- Custom JS -->
+   <script>
+    // 1. Clean the Users (Select only what JS needs, change casing to lowercase)
+    let user = @Html.Raw(Json.Serialize(Model.user.Select(u => new
+            {
+                userId = u.UserId,
+                name = u.Name,
+                username = u.Username,
+                department = u.Department,
+                cnic = u.Cnic,
+                isActive = u.IsActive
+            })));
+
+    // 2. Clean the Bills
+    let bills = @Html.Raw(Json.Serialize(Model.bills.Select(b => new
+            {
+                billId = b.BillId,
+                userId = b.UserId,
+                month = b.Month,
+                year = b.Year,
+                grandTotal = b.GrandTotal,
+                isPaid = b.IsPaid
+            })));
+
+    // 3. Clean the Attendance
+    let attendances = @Html.Raw(Json.Serialize(Model.attendances.Select(a => new
+            {
+                userId = a.UserId,
+                attendanceDate = a.AttendanceDate,
+                mealType = a.MealType,
+                teaWater = a.TeaWater,
+                food = a.Food,
+                foodPrice = a.FoodPrice
+            })));
+</script>
+
+<!-- Link your JS file AFTER the variables above -->
+
+    <script src="~/js/bill.js"></script>
+</body>
+</html>
