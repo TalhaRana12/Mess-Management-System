@@ -78,11 +78,10 @@ function setupEventListeners() {
 }
 
 // ==========================================
-// 1. DATA LOADING (Updated for C# Integration)
+// 1. DATA LOADING
 // ==========================================
 async function loadMembers() {
     try {
-        // Use the global 'user' variable injected via @Html.Raw in the View
         if (typeof user !== 'undefined' && Array.isArray(user)) {
             allMembers = user;
         } else {
@@ -95,11 +94,8 @@ async function loadMembers() {
 async function loadBills() {
     showLoading(true);
     try {
-        // Use the global 'bills' variable injected via @Html.Raw in the View
         if (typeof bills !== 'undefined' && Array.isArray(bills)) {
-            // Map C# bills to include Member Names
             allBills = bills.map(b => {
-                // Find member by ID to get Name/Department
                 const member = allMembers.find(m => m.userId === b.userId);
                 return {
                     ...b,
@@ -163,6 +159,12 @@ async function generateAllBills() {
     const month = parseInt(document.getElementById('generateMonth').value);
     const year = parseInt(document.getElementById('generateYear').value);
 
+    // FIX: Look for a Mess Fee input for bulk generation
+    // If you don't have this input in HTML, it defaults to 0. 
+    // You can hardcode a value here like: const fee = 500;
+    const feeInput = document.getElementById('generateServiceFee');
+    const fee = feeInput ? (parseFloat(feeInput.value) || 0) : 0;
+
     // 1. FILTER: Only Active Members
     const activeMembers = allMembers.filter(m => m.isActive === true);
 
@@ -174,23 +176,21 @@ async function generateAllBills() {
 
     let computedCount = 0;
     activeMembers.forEach(member => {
-        // Check if bill already exists in UI list
         const exists = allBills.find(b => b.userId == member.userId && b.month == month && b.year == year);
-        if (exists) return; // Skip if already exists
+        if (exists) return;
 
-        // Calculate costs based on real attendance data
         const attData = getRealAttendanceData(member.userId, month, year);
 
-        // Note: In a real app, you would POST this to the server here.
-        // For now, we update the UI locally.
+        // FIX: Add 'serviceFee' to the object and add 'fee' to 'grandTotal'
         const newBill = {
-            billId: Math.floor(Math.random() * 90000), // Temp ID
+            billId: Math.floor(Math.random() * 90000),
             userId: member.userId,
             month: month,
             year: year,
             totalTeaWaterAmount: attData.teaTotal,
             totalFoodAmount: attData.foodTotal,
-            grandTotal: attData.total,
+            serviceFee: fee, // Store the fee
+            grandTotal: attData.total + fee, // Add fee to total
             isPaid: false,
             memberName: member.name,
             username: member.username,
@@ -204,7 +204,7 @@ async function generateAllBills() {
 
     setTimeout(() => {
         if (computedCount > 0) {
-            showToast(`Computed bills for ${computedCount} active members.`, 'success');
+            showToast(`Computed bills for ${computedCount} active members (Fee: ${formatMoney(fee)}).`, 'success');
             filteredBills = [...allBills];
             renderBillsTable();
             updateStatistics();
@@ -219,12 +219,10 @@ async function generateIndividualBill() {
     if (!selectedMember) return;
     toggleBtn('searchBillBtn', true, 'Generating...');
 
-    // 2. LOGIC: Generate regardless of 'isActive' status
     const month = parseInt(document.getElementById('searchMonth').value);
     const year = parseInt(document.getElementById('searchYear').value);
     const fee = parseFloat(document.getElementById('searchServiceFee').value) || 0;
 
-    // Get Data from Global 'attendances' variable
     const attData = getRealAttendanceData(selectedMember.userId, month, year);
 
     currentBillData = {
@@ -251,16 +249,12 @@ async function generateIndividualBill() {
     showToast('Bill generated!', 'success');
 }
 
-// Helper: Calculate Bill from Real C# Attendance Data
 function getRealAttendanceData(userId, month, year) {
     let relevantAttendance = [];
 
-    // Check if C# attendance data exists
     if (typeof attendances !== 'undefined' && Array.isArray(attendances)) {
         relevantAttendance = attendances.filter(a => {
-            // Parse date "yyyy-mm-dd"
             const d = new Date(a.attendanceDate);
-            // Match Year and Month
             return a.userId === userId && (d.getMonth() + 1) === month && d.getFullYear() === year;
         });
     }
@@ -270,12 +264,10 @@ function getRealAttendanceData(userId, month, year) {
     const details = [];
 
     relevantAttendance.forEach(a => {
-        const teaCost = a.teaWater ? 50 : 0; // Assuming 50 for tea
+        const teaCost = a.teaWater ? 50 : 0;
         const foodCost = a.food ? (a.foodPrice || 0) : 0;
-
         teaTotal += teaCost;
         foodTotal += foodCost;
-
         details.push({
             date: a.attendanceDate,
             mealType: a.mealType,
@@ -285,12 +277,7 @@ function getRealAttendanceData(userId, month, year) {
         });
     });
 
-    return {
-        teaTotal: teaTotal,
-        foodTotal: foodTotal,
-        total: teaTotal + foodTotal,
-        details: details
-    };
+    return { teaTotal, foodTotal, total: teaTotal + foodTotal, details };
 }
 
 function displayBillModal(data) {
@@ -323,7 +310,7 @@ function displayBillModal(data) {
 
     setSum('billTeaWaterAmount', data.totalTeaWaterAmount);
     setSum('billFoodAmount', data.totalFoodAmount);
-    setSum('billSubtotal', data.subtotal || (data.totalTeaWaterAmount + data.totalFoodAmount));
+    setSum('billSubtotal', data.totalTeaWaterAmount + data.totalFoodAmount); // Subtotal is just tea + food
     setSum('billServiceFee', data.serviceFee || 0);
     setSum('billGrandTotal', data.grandTotal);
 
@@ -339,7 +326,6 @@ function renderBillsTable() {
     const emptyState = document.getElementById('emptyState');
     tbody.innerHTML = '';
 
-    // 3. FIX: Check for empty array and show "No Record Yet"
     if (!filteredBills || filteredBills.length === 0) {
         if (emptyState) {
             emptyState.style.display = 'block';
@@ -401,13 +387,10 @@ function applyFilters() {
 function updateStatistics() {
     if (document.getElementById('totalBills'))
         document.getElementById('totalBills').textContent = filteredBills.length;
-
     if (document.getElementById('paidBills'))
         document.getElementById('paidBills').textContent = filteredBills.filter(b => b.isPaid).length;
-
     if (document.getElementById('unpaidBills'))
         document.getElementById('unpaidBills').textContent = filteredBills.filter(b => !b.isPaid).length;
-
     if (document.getElementById('totalAmount'))
         document.getElementById('totalAmount').textContent = formatMoney(filteredBills.reduce((s, b) => s + b.grandTotal, 0));
 }
@@ -418,6 +401,7 @@ window.viewBillById = (id) => {
     if (!bill) return;
 
     const attData = getRealAttendanceData(bill.userId, bill.month, bill.year);
+    // Ensure serviceFee is preserved from the bill object
     currentBillData = { ...bill, attendanceDetails: attData.details };
     displayBillModal(currentBillData);
 };
@@ -433,6 +417,7 @@ function sendBillToMember() {
     if (currentBillData) showToast('Sending bill feature pending server implementation...', 'info');
 }
 
+// FIX: Updated PDF Generation to include Mess Service Fee
 function generateAndDownloadPDF(data) {
     showToast('Generating PDF...', 'info');
     try {
@@ -490,14 +475,22 @@ function generateAndDownloadPDF(data) {
         const y = doc.lastAutoTable.finalY + 10;
         doc.setFillColor(248, 249, 250).roundedRect(15, y, 180, 45, 2, 2, 'F');
         doc.setTextColor(0, 0, 0).setFontSize(10).setFont('helvetica', 'normal');
+
         doc.text('Tea/Water Charges:', 20, y + 8);
         doc.text(formatMoney(data.totalTeaWaterAmount), 185, y + 8, { align: 'right' });
+
         doc.text('Food Charges:', 20, y + 16);
         doc.text(formatMoney(data.totalFoodAmount), 185, y + 16, { align: 'right' });
+
+        // FIX: Added Mess Service Fee row in PDF
+        doc.text('Mess Service Fee:', 20, y + 24);
+        doc.text(formatMoney(data.serviceFee || 0), 185, y + 24, { align: 'right' });
+
         doc.setFont('helvetica', 'bold');
-        doc.text('GRAND TOTAL:', 20, y + 35);
+        // Adjusted Y position to make room for service fee
+        doc.text('GRAND TOTAL:', 20, y + 36);
         doc.setTextColor(25, 135, 84);
-        doc.text(formatMoney(data.grandTotal), 185, y + 35, { align: 'right' });
+        doc.text(formatMoney(data.grandTotal), 185, y + 36, { align: 'right' });
 
         doc.save(`Bill_${data.billId}_${data.memberName}.pdf`);
         showToast('PDF downloaded successfully!', 'success');
