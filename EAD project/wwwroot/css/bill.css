@@ -1,5 +1,6 @@
 ﻿/* Import Dashboard Base Styles */
-@import url('Admindashboard.css');
+@import url('dashboard.css');
+
 /* Body & General */
 body {
     font-family: 'Poppins', sans-serif;
@@ -36,6 +37,10 @@ body {
         .bill-action-card .action-icon i {
             font-size: 2rem;
         }
+
+    .bill-action-card .action-icon-primary {
+        background: rgba(13, 110, 253, 0.1);
+    }
 
     .bill-action-card .card-title {
         font-size: 1.2rem;

@@ -104,8 +104,8 @@
                     <div class="col-12 col-lg-6">
                         <div class="card bill-action-card">
                             <div class="card-body">
-                                <div class="action-icon">
-                                    <i class="bi bi-person-search text-primary"></i>
+                                <div class="action-icon action-icon-primary">
+                                    <i class="bi bi-search text-primary"></i>
                                 </div>
                                 <h5 class="card-title">Search Individual Bill</h5>
                                 <p class="card-text">Search and generate bill for a specific member</p>
@@ -393,39 +393,39 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <!-- Custom JS -->
-   <script>
+     <script>
     // 1. Clean the Users (Select only what JS needs, change casing to lowercase)
-    let user = @Html.Raw(Json.Serialize(Model.user.Select(u => new
-            {
-                userId = u.UserId,
-                name = u.Name,
-                username = u.Username,
-                department = u.Department,
-                cnic = u.Cnic,
-                isActive = u.IsActive
-            })));
+        let user = @Html.Raw(Json.Serialize(Model.user.Select(u => new
+                {
+                    userId = u.UserId,
+                    name = u.Name,
+                    username = u.Username,
+                    department = u.Department,
+                    cnic = u.Cnic,
+                    isActive = u.IsActive
+                })));
 
-    // 2. Clean the Bills
-    let bills = @Html.Raw(Json.Serialize(Model.bills.Select(b => new
-            {
-                billId = b.BillId,
-                userId = b.UserId,
-                month = b.Month,
-                year = b.Year,
-                grandTotal = b.GrandTotal,
-                isPaid = b.IsPaid
-            })));
+        // 2. Clean the Bills
+        let bills = @Html.Raw(Json.Serialize(Model.bills.Select(b => new
+                {
+                    billId = b.BillId,
+                    userId = b.UserId,
+                    month = b.Month,
+                    year = b.Year,
+                    grandTotal = b.GrandTotal,
+                    isPaid = b.IsPaid
+                })));
 
-    // 3. Clean the Attendance
-    let attendances = @Html.Raw(Json.Serialize(Model.attendances.Select(a => new
-            {
-                userId = a.UserId,
-                attendanceDate = a.AttendanceDate,
-                mealType = a.MealType,
-                teaWater = a.TeaWater,
-                food = a.Food,
-                foodPrice = a.FoodPrice
-            })));
+        // 3. Clean the Attendance
+        let attendances = @Html.Raw(Json.Serialize(Model.attendances.Select(a => new
+                {
+                    userId = a.UserId,
+                    attendanceDate = a.AttendanceDate,
+                    mealType = a.MealType,
+                    teaWater = a.TeaWater,
+                    food = a.Food,
+                    foodPrice = a.FoodPrice
+                })));
 </script>
 
 <!-- Link your JS file AFTER the variables above -->
@@ -433,3 +433,4 @@
     <script src="~/js/bill.js"></script>
 </body>
 </html>
+
