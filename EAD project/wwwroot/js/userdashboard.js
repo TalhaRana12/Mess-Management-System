@@ -122,24 +122,29 @@ function loadStatistics() {
     // Calculate statistics from attendance data
     let totalAttendance = 0;
     let totalMeals = 0;
-    let totalTea = 0;
     let totalBill = 0;
+
+    // Calculate total possible days (excluding today if pending)
+    const totalDays = monthlyAttendance.length;
+    const completedDays = monthlyAttendance.filter(record => record.status !== 'pending').length;
 
     monthlyAttendance.forEach(record => {
         if (record.status === 'present') {
             totalAttendance++;
             totalMeals += record.meals;
-            totalTea += record.tea;
         }
     });
 
+    // Calculate attendance rate percentage
+    const attendanceRate = completedDays > 0 ? Math.round((totalAttendance / completedDays) * 100) : 0;
+
     // Calculate estimated bill (example calculation)
-    totalBill = (totalMeals * 115) + (totalTea * 10);
+    totalBill = (totalMeals * 115);
 
     // Update stat cards
     document.getElementById('totalAttendance').textContent = totalAttendance;
     document.getElementById('mealCount').textContent = totalMeals;
-    document.getElementById('teaCount').textContent = totalTea;
+    document.getElementById('attendanceRate').textContent = `${attendanceRate}%`;
     document.getElementById('currentBill').textContent = `Rs. ${totalBill}`;
 }
 
