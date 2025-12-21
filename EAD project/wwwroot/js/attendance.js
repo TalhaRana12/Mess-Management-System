@@ -145,11 +145,15 @@ async function loadMembers() {
     }
 }
 
+
 //async function loadAttendanceForDate() {
 //    try {
 //        const dateStr = formatDateForInput(selectedDate);
 
-//        attendanceData = allMembers.map(member => {
+//       const activeMembers = allMembers.filter(m => m.isActive === true || m.IsActive === true);
+
+//        // Now map only the active members
+//        attendanceData = activeMembers.map(member => {
 //            const mId = member.userId || member.UserId;
 //            const mName = member.name || member.Name;
 //            const mUser = member.username || member.Username;
@@ -177,10 +181,8 @@ async function loadMembers() {
 //            // 3. Calculate Price Logic
 //            let finalPrice = 0;
 //            if (existingRecord) {
-//                // If record exists, trust the price in DB unless it's 0 and they have food/tea
 //                finalPrice = existingRecord.foodPrice || existingRecord.FoodPrice || 0;
 //            } else {
-//                // New Record Defaults
 //                if (isFood) {
 //                    finalPrice = calculateMealPrice(selectedMealType);
 //                } else if (isTeaWater) {
@@ -214,10 +216,8 @@ async function loadMembers() {
 async function loadAttendanceForDate() {
     try {
         const dateStr = formatDateForInput(selectedDate);
+        const activeMembers = allMembers.filter(m => m.isActive === true || m.IsActive === true);
 
-       const activeMembers = allMembers.filter(m => m.isActive === true || m.IsActive === true);
-
-        // Now map only the active members
         attendanceData = activeMembers.map(member => {
             const mId = member.userId || member.UserId;
             const mName = member.name || member.Name;
@@ -243,7 +243,7 @@ async function loadAttendanceForDate() {
                 ? (existingRecord.food !== undefined ? existingRecord.food : existingRecord.Food)
                 : false;
 
-            // 3. Calculate Price Logic
+            // --- FIXED LOGIC START ---
             let finalPrice = 0;
             if (existingRecord) {
                 finalPrice = existingRecord.foodPrice || existingRecord.FoodPrice || 0;
@@ -251,9 +251,13 @@ async function loadAttendanceForDate() {
                 if (isFood) {
                     finalPrice = calculateMealPrice(selectedMealType);
                 } else if (isTeaWater) {
-                    finalPrice = calculateTeaWaterCost();
+                    // FIX: Apply Tea Price if Food is false but Tea is true
+                    finalPrice = TEA_WATER_PRICE;
+                } else {
+                    finalPrice = 0;
                 }
             }
+            // --- FIXED LOGIC END ---
 
             return {
                 attendanceId: attId,
@@ -278,7 +282,7 @@ async function loadAttendanceForDate() {
         showLoading(false);
     }
 }
-// ========================================
+//========================================
 // 5. Render Table
 // ========================================
 function renderAttendanceTable() {
@@ -347,6 +351,27 @@ function renderAttendanceTable() {
 // ========================================
 // 6. Checkbox Logic
 // ========================================
+//function handleTeaCheckboxChange(e) {
+//    const userId = parseInt(e.target.dataset.userId);
+//    const isChecked = e.target.checked;
+//    const attendance = attendanceData.find(a => a.userId === userId);
+
+//    if (attendance) {
+//        attendance.teaWater = isChecked;
+
+//        if (!isChecked) {
+//            // Unchecking Tea removes Food too
+//            attendance.food = false;
+//            attendance.foodPrice = 0;
+//            e.target.closest('tr').querySelector('.food-checkbox').checked = false;
+//        } else {
+//            // Checking Tea (if Food not selected) sets price to 50
+//            if (!attendance.food) attendance.foodPrice = calculateTeaWaterCost();
+//        }
+//        updateRowStatus(e.target.closest('tr'), attendance);
+//        updateStatistics();
+//    }
+//}
 function handleTeaCheckboxChange(e) {
     const userId = parseInt(e.target.dataset.userId);
     const isChecked = e.target.checked;
@@ -361,14 +386,36 @@ function handleTeaCheckboxChange(e) {
             attendance.foodPrice = 0;
             e.target.closest('tr').querySelector('.food-checkbox').checked = false;
         } else {
-            // Checking Tea (if Food not selected) sets price to 50
-            if (!attendance.food) attendance.foodPrice = calculateTeaWaterCost();
+            // FIX: If Tea is checked and Food is NOT, set price to Tea Price (50)
+            if (!attendance.food) {
+                attendance.foodPrice = TEA_WATER_PRICE;
+            }
         }
         updateRowStatus(e.target.closest('tr'), attendance);
         updateStatistics();
     }
 }
+//function handleFoodCheckboxChange(e) {
+//    const userId = parseInt(e.target.dataset.userId);
+//    const isChecked = e.target.checked;
+//    const attendance = attendanceData.find(a => a.userId === userId);
 
+//    if (attendance) {
+//        attendance.food = isChecked;
+
+//        if (isChecked) {
+//            // Food selected: Price = Meal Price
+//            attendance.teaWater = true;
+//            attendance.foodPrice = calculateMealPrice(selectedMealType);
+//            e.target.closest('tr').querySelector('.tea-checkbox').checked = true;
+//        } else {
+//            // Food unselected: Fallback to Tea Price (50)
+//            attendance.foodPrice = attendance.teaWater ? calculateTeaWaterCost() : 0;
+//        }
+//        updateRowStatus(e.target.closest('tr'), attendance);
+//        updateStatistics();
+//    }
+//}
 function handleFoodCheckboxChange(e) {
     const userId = parseInt(e.target.dataset.userId);
     const isChecked = e.target.checked;
@@ -383,14 +430,18 @@ function handleFoodCheckboxChange(e) {
             attendance.foodPrice = calculateMealPrice(selectedMealType);
             e.target.closest('tr').querySelector('.tea-checkbox').checked = true;
         } else {
-            // Food unselected: Fallback to Tea Price (50)
-            attendance.foodPrice = attendance.teaWater ? calculateTeaWaterCost() : 0;
+            // FIX: Food unselected -> Falls back to Tea Only
+            // Check if Tea is still active (it usually is)
+            if (attendance.teaWater) {
+                attendance.foodPrice = TEA_WATER_PRICE; // Set to 50
+            } else {
+                attendance.foodPrice = 0;
+            }
         }
         updateRowStatus(e.target.closest('tr'), attendance);
         updateStatistics();
     }
 }
-
 function updateRowStatus(row, attendance) {
     const statusBadge = row.querySelector('.status-badge');
     let statusClass = 'status-absent';

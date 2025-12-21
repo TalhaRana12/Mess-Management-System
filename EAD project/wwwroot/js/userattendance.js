@@ -128,6 +128,112 @@ function updateMonthInputAndDisplay() {
 // ========================================
 // Load User Attendance (Logic)
 // ========================================
+//async function loadUserAttendance() {
+//    showLoading(true);
+
+//    try {
+//        const year = selectedMonth.getFullYear();
+//        const month = selectedMonth.getMonth() + 1;
+
+//        // 1. Check if data exists
+//        if (!safeAttendanceData || safeAttendanceData.length === 0) {
+//            console.warn("No attendance data found.");
+//            attendanceRecords = [];
+//            renderAttendanceTable();
+//            showLoading(false);
+//            return;
+//        }
+
+//        // 2. Filter data for the selected month
+//        const filteredData = safeAttendanceData.filter(record => {
+//            // Support C# Property 'AttendanceDate' or JS camelCase 'attendanceDate'
+//            const dateStr = record.attendanceDate || record.AttendanceDate;
+
+//            if (!dateStr) return false;
+
+//            const recordDate = new Date(dateStr);
+//            return recordDate.getFullYear() === year && (recordDate.getMonth() + 1) === month;
+//        });
+
+//        // =========================================================
+//        // GROUPING LOGIC: Merge Lunch & Dinner rows by Date
+//        // =========================================================
+//        const groupedData = {};
+
+//        filteredData.forEach(record => {
+//            // Get properties with safe casing checks
+//            const dateStr = record.attendanceDate || record.AttendanceDate;
+//            // Handle mealType safely (it might be null)
+//            const mealType = record.mealType || record.MealType || "";
+//            const foodPrice = (record.foodPrice !== undefined) ? record.foodPrice : record.FoodPrice;
+//            const teaWater = (record.teaWater !== undefined) ? record.teaWater : record.TeaWater;
+//            const attId = (record.attendanceId !== undefined) ? record.attendanceId : record.AttendanceId;
+//            const uId = (record.userId !== undefined) ? record.userId : record.UserId;
+
+//            // Initialize object for this date if not exists
+//            if (!groupedData[dateStr]) {
+//                groupedData[dateStr] = {
+//                    attendanceId: attId, // Store the first ID found
+//                    userId: uId,
+//                    date: dateStr,
+//                    dayName: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' }),
+//                    teaWater: false,
+//                    lunchPrice: 0,
+//                    dinnerPrice: 0,
+//                    sentToAdmin: false
+//                };
+//            }
+
+//            const currentDay = groupedData[dateStr];
+
+//            // 1. Merge Tea/Water (True if true in ANY record for this day)
+//            if (teaWater === true) {
+//                currentDay.teaWater = true;
+//            }
+
+//            // 2. Merge Prices based on MealType
+//            const type = mealType.toLowerCase();
+
+//            // FIXED LOGIC: Only assign price if explicitly Lunch or Dinner
+//            if (type.includes("lunch")) {
+//                currentDay.lunchPrice = foodPrice || 0;
+//            }
+//            else if (type.includes("dinner")) {
+//                currentDay.dinnerPrice = foodPrice || 0;
+//            }
+
+//            // Previous fallback code removed to prevent Tea-only records from adding Lunch price
+//        });
+
+//        // 3. Convert Object back to Array and Calculate Totals
+//        attendanceRecords = Object.values(groupedData).map(day => {
+//            // Tea cost is fixed at 50 if the bit is true
+//            const teaWaterCost = day.teaWater ? TEA_WATER_PRICE : 0;
+
+//            // Total cost = Tea Cost + Lunch Price + Dinner Price
+//            const total = teaWaterCost + day.lunchPrice + day.dinnerPrice;
+
+//            return {
+//                ...day,
+//                totalCost: total
+//            };
+//        });
+
+//        // Sort by date (oldest to newest)
+//        attendanceRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+//        renderAttendanceTable();
+//        updateStatistics();
+//        updateCostBreakdown();
+//        showLoading(false);
+
+//    } catch (error) {
+//        console.error('Error processing attendance data:', error);
+//        console.log('Raw Data:', safeAttendanceData);
+//        showToast('Failed to process attendance records', 'error');
+//        showLoading(false);
+//    }
+//}
 async function loadUserAttendance() {
     showLoading(true);
 
@@ -146,33 +252,34 @@ async function loadUserAttendance() {
 
         // 2. Filter data for the selected month
         const filteredData = safeAttendanceData.filter(record => {
-            // Support C# Property 'AttendanceDate' or JS camelCase 'attendanceDate'
             const dateStr = record.attendanceDate || record.AttendanceDate;
-
             if (!dateStr) return false;
-
             const recordDate = new Date(dateStr);
             return recordDate.getFullYear() === year && (recordDate.getMonth() + 1) === month;
         });
 
         // =========================================================
-        // GROUPING LOGIC: Merge Lunch & Dinner rows by Date
+        // GROUPING LOGIC
         // =========================================================
         const groupedData = {};
 
         filteredData.forEach(record => {
-            // Get properties with safe casing checks
             const dateStr = record.attendanceDate || record.AttendanceDate;
-            const mealType = record.mealType || record.MealType || "";
-            const foodPrice = (record.foodPrice !== undefined) ? record.foodPrice : record.FoodPrice;
+
+            // SAFELY GET VALUES
+            const mealTypeRaw = record.mealType || record.MealType || "";
+            const rawPrice = (record.foodPrice !== undefined) ? record.foodPrice : record.FoodPrice;
             const teaWater = (record.teaWater !== undefined) ? record.teaWater : record.TeaWater;
             const attId = (record.attendanceId !== undefined) ? record.attendanceId : record.AttendanceId;
             const uId = (record.userId !== undefined) ? record.userId : record.UserId;
 
+            // Ensure foodPrice is a proper Number. If null/NaN, default to 0.
+            const foodPrice = parseFloat(rawPrice) || 0;
+
             // Initialize object for this date if not exists
             if (!groupedData[dateStr]) {
                 groupedData[dateStr] = {
-                    attendanceId: attId, // Store the first ID found
+                    attendanceId: attId,
                     userId: uId,
                     date: dateStr,
                     dayName: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' }),
@@ -185,33 +292,45 @@ async function loadUserAttendance() {
 
             const currentDay = groupedData[dateStr];
 
-            // 1. Merge Tea/Water (True if true in ANY record for this day)
+            // 1. Merge Tea/Water
             if (teaWater === true) {
                 currentDay.teaWater = true;
             }
 
             // 2. Merge Prices based on MealType
-            const type = mealType.toLowerCase();
+            const type = mealTypeRaw.toLowerCase().trim();
 
+            // ONLY assign price if the MealType explicitly contains "lunch" or "dinner"
             if (type.includes("lunch")) {
-                currentDay.lunchPrice = foodPrice || 0;
+                // If this record says Lunch, update the price. 
+                // Using Math.max ensures that if we have a 0 price record and a >0 price record, we keep the cost.
+                // However, usually it's just one record, so direct assignment is fine.
+                // We use || 0 to be double sure it's numeric.
+                if (foodPrice > 0) {
+                    currentDay.lunchPrice = foodPrice;
+                }
             }
             else if (type.includes("dinner")) {
-                currentDay.dinnerPrice = foodPrice || 0;
+                if (foodPrice > 0) {
+                    currentDay.dinnerPrice = foodPrice;
+                }
             }
-            else {
-                // Fallback: If type is unknown, assign to lunch if empty
-                if (currentDay.lunchPrice === 0) currentDay.lunchPrice = foodPrice || 0;
-            }
+            // NO 'ELSE': Unknown meal types (like 'TeaOnly') will NOT affect lunch/dinner prices
         });
 
         // 3. Convert Object back to Array and Calculate Totals
         attendanceRecords = Object.values(groupedData).map(day => {
             const teaWaterCost = day.teaWater ? TEA_WATER_PRICE : 0;
-            const total = teaWaterCost + day.lunchPrice + day.dinnerPrice;
+            // Ensure strictly numbers
+            const lPrice = parseFloat(day.lunchPrice) || 0;
+            const dPrice = parseFloat(day.dinnerPrice) || 0;
+
+            const total = teaWaterCost + lPrice + dPrice;
 
             return {
                 ...day,
+                lunchPrice: lPrice,
+                dinnerPrice: dPrice,
                 totalCost: total
             };
         });
@@ -226,12 +345,10 @@ async function loadUserAttendance() {
 
     } catch (error) {
         console.error('Error processing attendance data:', error);
-        console.log('Raw Data:', safeAttendanceData);
         showToast('Failed to process attendance records', 'error');
         showLoading(false);
     }
 }
-
 // ========================================
 // Render Attendance Table
 // ========================================
