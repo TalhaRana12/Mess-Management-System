@@ -1,14 +1,9 @@
-﻿// ========================================
-// Global Variables & Configuration
-// ========================================
-
-// 'attendance' variable is defined in the Razor View:
-// let attendance = @Html.Raw(Json.Serialize(Model));
+﻿let safeAttendanceData = (typeof attendance !== 'undefined' && attendance !== null) ? attendance : [];
 
 let currentUser = {
-    // We can pull the ID from the first record if it exists, or keep hardcoded for now
-    userId: (attendance && attendance.length > 0) ? attendance[0].userId : 1,
-    name: 'User', // You can pass this from C# ViewBag if needed
+    // We can pull the ID from the first record if it exists, or keep hardcoded 
+    userId: (safeAttendanceData.length > 0) ? (safeAttendanceData[0].userId || safeAttendanceData[0].UserId) : 0,
+    name: 'User',
     username: 'user'
 };
 
@@ -88,8 +83,7 @@ function setupEventListeners() {
     if (prevBtn) {
         prevBtn.addEventListener('click', () => {
             selectedMonth.setMonth(selectedMonth.getMonth() - 1);
-            document.getElementById('attendanceMonth').value = formatMonthForInput(selectedMonth);
-            updateMonthDisplay();
+            updateMonthInputAndDisplay();
         });
     }
 
@@ -97,8 +91,7 @@ function setupEventListeners() {
     if (nextBtn) {
         nextBtn.addEventListener('click', () => {
             selectedMonth.setMonth(selectedMonth.getMonth() + 1);
-            document.getElementById('attendanceMonth').value = formatMonthForInput(selectedMonth);
-            updateMonthDisplay();
+            updateMonthInputAndDisplay();
         });
     }
 
@@ -106,8 +99,7 @@ function setupEventListeners() {
     if (currBtn) {
         currBtn.addEventListener('click', () => {
             selectedMonth = new Date();
-            document.getElementById('attendanceMonth').value = formatMonthForInput(selectedMonth);
-            updateMonthDisplay();
+            updateMonthInputAndDisplay();
         });
     }
 
@@ -127,8 +119,14 @@ function setupEventListeners() {
     }
 }
 
+function updateMonthInputAndDisplay() {
+    const monthInput = document.getElementById('attendanceMonth');
+    if (monthInput) monthInput.value = formatMonthForInput(selectedMonth);
+    updateMonthDisplay();
+}
+
 // ========================================
-// Load User Attendance (FROM C# DATA)
+// Load User Attendance (Logic)
 // ========================================
 async function loadUserAttendance() {
     showLoading(true);
@@ -137,58 +135,98 @@ async function loadUserAttendance() {
         const year = selectedMonth.getFullYear();
         const month = selectedMonth.getMonth() + 1;
 
-        // 1. Filter the global 'attendance' list passed from C# Model
-        // We filter locally because the controller sent all history
-        const filteredData = attendance.filter(record => {
-            // Handle Case: Json.Serialize might make props camelCase or PascalCase
-            const dateStr = record.date || record.Date;
+        // 1. Check if data exists
+        if (!safeAttendanceData || safeAttendanceData.length === 0) {
+            console.warn("No attendance data found.");
+            attendanceRecords = [];
+            renderAttendanceTable();
+            showLoading(false);
+            return;
+        }
+
+        // 2. Filter data for the selected month
+        const filteredData = safeAttendanceData.filter(record => {
+            // Support C# Property 'AttendanceDate' or JS camelCase 'attendanceDate'
+            const dateStr = record.attendanceDate || record.AttendanceDate;
+
+            if (!dateStr) return false;
+
             const recordDate = new Date(dateStr);
             return recordDate.getFullYear() === year && (recordDate.getMonth() + 1) === month;
         });
 
-        // 2. Map Database Model to UI Logic
-        attendanceRecords = filteredData.map(record => {
-            const dateStr = record.date || record.Date;
-            const dateObj = new Date(dateStr);
+        // =========================================================
+        // GROUPING LOGIC: Merge Lunch & Dinner rows by Date
+        // =========================================================
+        const groupedData = {};
 
-            // Handle Casing (Pascal vs Camel)
-            const dbTeaWater = (record.teaWater !== undefined) ? record.teaWater : record.TeaWater;
-            const dbFoodPrice = (record.foodPrice !== undefined) ? record.foodPrice : record.FoodPrice;
-            const dbAttendanceId = (record.attendanceID !== undefined) ? record.attendanceID : record.AttendanceId;
-            const dbUserId = (record.userID !== undefined) ? record.userID : record.UserId;
+        filteredData.forEach(record => {
+            // Get properties with safe casing checks
+            const dateStr = record.attendanceDate || record.AttendanceDate;
+            const mealType = record.mealType || record.MealType || "";
+            const foodPrice = (record.foodPrice !== undefined) ? record.foodPrice : record.FoodPrice;
+            const teaWater = (record.teaWater !== undefined) ? record.teaWater : record.TeaWater;
+            const attId = (record.attendanceId !== undefined) ? record.attendanceId : record.AttendanceId;
+            const uId = (record.userId !== undefined) ? record.userId : record.UserId;
 
-            // Calculations
-            // Cost of Tea/Water is fixed (50) if boolean is true
-            const teaWaterCost = dbTeaWater ? TEA_WATER_PRICE : 0;
+            // Initialize object for this date if not exists
+            if (!groupedData[dateStr]) {
+                groupedData[dateStr] = {
+                    attendanceId: attId, // Store the first ID found
+                    userId: uId,
+                    date: dateStr,
+                    dayName: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' }),
+                    teaWater: false,
+                    lunchPrice: 0,
+                    dinnerPrice: 0,
+                    sentToAdmin: false
+                };
+            }
 
-            // DB has one 'FoodPrice'. We assign it to 'lunchPrice' for display purposes
-            // since the DB doesn't distinguish between Lunch/Dinner prices.
-            const foodCost = dbFoodPrice || 0;
+            const currentDay = groupedData[dateStr];
 
-            // Total Daily Cost
-            const total = teaWaterCost + foodCost;
+            // 1. Merge Tea/Water (True if true in ANY record for this day)
+            if (teaWater === true) {
+                currentDay.teaWater = true;
+            }
+
+            // 2. Merge Prices based on MealType
+            const type = mealType.toLowerCase();
+
+            if (type.includes("lunch")) {
+                currentDay.lunchPrice = foodPrice || 0;
+            }
+            else if (type.includes("dinner")) {
+                currentDay.dinnerPrice = foodPrice || 0;
+            }
+            else {
+                // Fallback: If type is unknown, assign to lunch if empty
+                if (currentDay.lunchPrice === 0) currentDay.lunchPrice = foodPrice || 0;
+            }
+        });
+
+        // 3. Convert Object back to Array and Calculate Totals
+        attendanceRecords = Object.values(groupedData).map(day => {
+            const teaWaterCost = day.teaWater ? TEA_WATER_PRICE : 0;
+            const total = teaWaterCost + day.lunchPrice + day.dinnerPrice;
 
             return {
-                attendanceId: dbAttendanceId,
-                userId: dbUserId,
-                date: dateStr.split('T')[0], // ISO Date
-                dayName: dateObj.toLocaleDateString('en-US', { weekday: 'long' }),
-                teaWater: dbTeaWater,
-                foodPrice: foodCost,
-                // UI Specific Mappings:
-                lunchPrice: foodCost, // Mapping DB FoodPrice to Lunch column
-                dinnerPrice: 0,       // Setting Dinner to 0 as DB structure is simple
-                totalCost: total,
-                sentToAdmin: false    // DB currently has no column for this, default to false
+                ...day,
+                totalCost: total
             };
         });
+
+        // Sort by date (oldest to newest)
+        attendanceRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         renderAttendanceTable();
         updateStatistics();
         updateCostBreakdown();
         showLoading(false);
+
     } catch (error) {
         console.error('Error processing attendance data:', error);
+        console.log('Raw Data:', safeAttendanceData);
         showToast('Failed to process attendance records', 'error');
         showLoading(false);
     }
@@ -224,21 +262,30 @@ function renderAttendanceTable() {
             <td>
                 <span class="day-badge">${record.dayName}</span>
             </td>
+            
+            <!-- Tea/Water -->
             <td class="text-center">
                 <i class="bi bi-${record.teaWater ? 'check-circle-fill status-icon present' : 'x-circle-fill status-icon absent'}"></i>
             </td>
+            
+            <!-- Lunch -->
             <td class="text-center">
-                <!-- Using Lunch Column for Main Food Price -->
                 <i class="bi bi-${record.lunchPrice > 0 ? 'check-circle-fill status-icon present' : 'x-circle-fill status-icon absent'}"></i>
                 ${record.lunchPrice > 0 ? `<br><small class="text-muted">Rs. ${record.lunchPrice}</small>` : ''}
             </td>
+            
+            <!-- Dinner -->
             <td class="text-center">
-                <!-- Dinner Column (Empty based on current DB Schema) -->
-                <i class="bi bi-dash-circle status-icon absent" style="opacity: 0.5"></i>
+                <i class="bi bi-${record.dinnerPrice > 0 ? 'check-circle-fill status-icon present' : 'x-circle-fill status-icon absent'}"></i>
+                ${record.dinnerPrice > 0 ? `<br><small class="text-muted">Rs. ${record.dinnerPrice}</small>` : ''}
             </td>
+            
+            <!-- Total Cost -->
             <td class="text-end">
                 <span class="cost-display">Rs. ${record.totalCost}</span>
             </td>
+            
+            <!-- Actions -->
             <td class="text-center">
                 <div class="action-btn-group" id="actions-${record.attendanceId}">
                     ${record.sentToAdmin
@@ -262,8 +309,14 @@ function renderAttendanceTable() {
 // ========================================
 function updateStatistics() {
     const totalDays = attendanceRecords.length;
-    // Count days where food was eaten (Price > 0)
-    const totalMeals = attendanceRecords.filter(r => r.lunchPrice > 0).length;
+
+    // Calculate Total Meals (Lunch Count + Dinner Count)
+    let totalMeals = 0;
+    attendanceRecords.forEach(r => {
+        if (r.lunchPrice > 0) totalMeals++;
+        if (r.dinnerPrice > 0) totalMeals++;
+    });
+
     const monthTotal = attendanceRecords.reduce((sum, r) => sum + r.totalCost, 0);
 
     setTextContent('totalDays', totalDays);
@@ -276,14 +329,22 @@ function updateStatistics() {
 // Update Cost Breakdown
 // ========================================
 function updateCostBreakdown() {
+    // 1. Tea/Water
     const teaWaterDays = attendanceRecords.filter(r => r.teaWater).length;
-    // Using lunchPrice as the main food price container
-    const lunchCount = attendanceRecords.filter(r => r.lunchPrice > 0).length;
-
     const teaWaterTotal = teaWaterDays * TEA_WATER_PRICE;
-    const lunchTotal = attendanceRecords.reduce((sum, r) => sum + r.lunchPrice, 0);
-    const grandTotal = teaWaterTotal + lunchTotal;
 
+    // 2. Lunch
+    const lunchCount = attendanceRecords.filter(r => r.lunchPrice > 0).length;
+    const lunchTotal = attendanceRecords.reduce((sum, r) => sum + r.lunchPrice, 0);
+
+    // 3. Dinner
+    const dinnerCount = attendanceRecords.filter(r => r.dinnerPrice > 0).length;
+    const dinnerTotal = attendanceRecords.reduce((sum, r) => sum + r.dinnerPrice, 0);
+
+    // 4. Grand Total
+    const grandTotal = teaWaterTotal + lunchTotal + dinnerTotal;
+
+    // Update HTML
     setTextContent('teaWaterDays', teaWaterDays);
     setTextContent('teaWaterPrice', TEA_WATER_PRICE);
     setTextContent('teaWaterTotal', teaWaterTotal);
@@ -291,9 +352,8 @@ function updateCostBreakdown() {
     setTextContent('lunchCount', lunchCount);
     setTextContent('lunchTotal', lunchTotal);
 
-    // Zero out dinner stats for now
-    setTextContent('dinnerCount', 0);
-    setTextContent('dinnerTotal', 0);
+    setTextContent('dinnerCount', dinnerCount);
+    setTextContent('dinnerTotal', dinnerTotal);
 
     setTextContent('grandTotal', grandTotal);
 }
@@ -309,6 +369,8 @@ function setTextContent(id, value) {
 // ========================================
 function openVerifyModal(attendanceId) {
     selectedAttendanceId = attendanceId;
+
+    // Find record by ID or by checking if that ID was grouped into a date
     const record = attendanceRecords.find(r => r.attendanceId === attendanceId);
 
     if (!record) return;
@@ -331,8 +393,12 @@ function openVerifyModal(attendanceId) {
             <span class="detail-value">${record.teaWater ? 'Yes (Rs. ' + TEA_WATER_PRICE + ')' : 'No'}</span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">Food (Meal):</span>
+            <span class="detail-label">Lunch:</span>
             <span class="detail-value">${record.lunchPrice > 0 ? 'Yes (Rs. ' + record.lunchPrice + ')' : 'No'}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Dinner:</span>
+            <span class="detail-value">${record.dinnerPrice > 0 ? 'Yes (Rs. ' + record.dinnerPrice + ')' : 'No'}</span>
         </div>
         <div class="detail-row">
             <span class="detail-label">Total Cost:</span>
@@ -356,30 +422,23 @@ async function confirmVerification() {
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
 
-        // TODO: Create a C# Controller Action to handle this
-        // const response = await fetch(`/Attendance/Verify`, {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({ id: selectedAttendanceId })
-        // });
+        // TODO: Create C# Controller Action to handle this if needed
+        // await fetch('/Attendance/Verify', ...);
 
-        // Simulate API delay for now
+        // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        // Update local record
+        // Update local record visually
         const record = attendanceRecords.find(r => r.attendanceId === selectedAttendanceId);
         if (record) {
             record.sentToAdmin = true;
         }
 
-        // Close modal
         const modalEl = document.getElementById('verifyModal');
         const modal = bootstrap.Modal.getInstance(modalEl);
         modal.hide();
 
-        // Update UI
         renderAttendanceTable();
-
         showToast('Attendance verified successfully!', 'success');
 
         btn.disabled = false;
