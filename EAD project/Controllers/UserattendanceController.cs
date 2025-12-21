@@ -6,28 +6,79 @@ using System.Security.Claims;
 
 namespace EAD_project.Controllers
 {
+    public class AttendanceModel
+    {
+        public List<TblAttendance> attendance;
+        public List<TblRequest> request;
+    }
     public class UserattendanceController : Controller
     {
         [HttpGet]
+        //public async Task<IActionResult> user_attendance()
+        //{
+        //  int? sessionUserId = HttpContext.Session.GetInt32("uet");
+        //    if (sessionUserId == null)
+        //    {
+        //         return RedirectToAction("login", "Login");
+        //    }
+        //  int currentUserId = sessionUserId.Value;
+
+
+
+        //    using (MessManagmentContext mydb = new MessManagmentContext())
+        //    {
+        //        var viewmodel = new AttendanceModel
+        //        {
+        //            attendance = await mydb.TblAttendances
+        //                                .Where(x => x.UserId == currentUserId)
+        //                                .ToListAsync(),
+        //            request = await mydb.TblRequests.Where(x => x.UserId == currentUserId).ToListAsync()
+        //        };
+        //        return View(viewmodel);
+        //    }
+
+        //}
         public async Task<IActionResult> user_attendance()
         {
-          int? sessionUserId = HttpContext.Session.GetInt32("uet");
+            int? sessionUserId = HttpContext.Session.GetInt32("uet");
             if (sessionUserId == null)
             {
-                 return RedirectToAction("login", "Login");
+                return RedirectToAction("login", "Login");
             }
-          int currentUserId = sessionUserId.Value;
-
-            List<TblAttendance>? attendances;
+            int currentUserId = sessionUserId.Value;
 
             using (MessManagmentContext mydb = new MessManagmentContext())
             {
-                attendances = await mydb.TblAttendances
+                var viewmodel = new AttendanceModel
+                {
+                    attendance = await mydb.TblAttendances
                                         .Where(x => x.UserId == currentUserId)
-                                        .ToListAsync();
-            }
+                                        .Select(a => new TblAttendance
+                                        {
+                                            AttendanceId = a.AttendanceId,
+                                            UserId = a.UserId,
+                                            AttendanceDate = a.AttendanceDate,
+                                            MealType = a.MealType,
+                                            TeaWater = a.TeaWater,
+                                            Food = a.Food,
+                                            FoodPrice = a.FoodPrice
+                                        })
+                                        .ToListAsync(),
 
-            return View(attendances);
+                    request = await mydb.TblRequests
+                                        .Where(x => x.UserId == currentUserId)
+                                        .Select(r => new TblRequest
+                                        {
+                                            RequestId = r.RequestId,
+                                            AttendanceId = r.AttendanceId,
+                                            UserId = r.UserId,
+                                            Status = r.Status,
+                                            AdminMessage = r.AdminMessage
+                                        })
+                                        .ToListAsync()
+                };
+                return View(viewmodel);
+            }
         }
         public class VerificationRequestModel
         {
