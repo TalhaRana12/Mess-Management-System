@@ -11,22 +11,34 @@ namespace EAD_project.Controllers
             return View();
         }
         [HttpPost]
-
         public IActionResult check(string name, string password)
         {
             using (MessManagmentContext mydb = new MessManagmentContext())
             {
-                // Use FirstOrDefault instead of Where
-                var user = mydb.TblUsers.FirstOrDefault(row => row.Username == name && row.PasswordHash == password && row.Role == "Admin");
+                // 1. Fetch user by Credentials ONLY (Remove the Role check here)
+                var user = mydb.TblUsers.FirstOrDefault(row => row.Username == name && row.PasswordHash == password);
 
-                // Now checks if a specific user was actually found
+                // 2. Check if user exists
                 if (user != null)
                 {
-                    return RedirectToAction("Admindashboard", "Admin");
+                    if (user.Role == "Admin")
+                    {
+                        return RedirectToAction("Admindashboard", "Admin");
+                    }
+                    else if (user.Role == "Member") // Make sure this string matches exactly what is in your Database
+                    {
+                        return RedirectToAction("user_dashboard", "Userdashboard", new { id = user.UserId });
+                    }
+                    else
+                    {
+                        // FIX: Handle cases where Role is neither "Admin" nor "Member"
+                        ViewBag.Error = "Unauthorized Role";
+                        return View("login");
+                    }
                 }
                 else
                 {
-                    // Optional: Add an error message to display on the login page
+                    // Credentials didn't match any user
                     ViewBag.Error = "Invalid Username or Password";
                     return View("login");
                 }

@@ -1,7 +1,8 @@
 ﻿@{
     Layout = null;
 }
-
+@using EAD_project.Controllers
+@model UserViewModel
 
 <!DOCTYPE html>
 <html lang="en">
@@ -191,6 +192,42 @@
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
+    <!-- 1. C# Variables to JavaScript -->
+<script>
+    // User Profile
+    let currentUser = {
+        userId: @Model.user.UserId,
+        name: "@Model.user.Name",
+        username: "@Model.user.Username",
+        department: "@Model.user.Department",
+        cnic: "@Model.user.Cnic"
+    };
+
+    // Attendance List
+    let attendances = @Html.Raw(Json.Serialize(Model.attendance.Select(a => new
+            {
+                attendanceId = a.AttendanceId,
+                attendanceDate = a.AttendanceDate,
+                mealType = a.MealType,
+                teaWater = a.TeaWater,
+                food = a.Food,
+                foodPrice = a.FoodPrice
+            })));
+
+    // Bills List (Paid & Unpaid)
+    let bill = @Html.Raw(Json.Serialize(Model.bill.Select(b => new
+            {
+                billId = b.BillId,
+                month = b.Month,
+                year = b.Year,
+                grandTotal = b.GrandTotal,
+                isPaid = b.IsPaid
+            })));
+
+    // Menu List
+    let menu = @Html.Raw(Json.Serialize(Model.menu));
+</script>
+
     <script src="~/js/userdashboard.js"></script>
 </body>
 </html>
