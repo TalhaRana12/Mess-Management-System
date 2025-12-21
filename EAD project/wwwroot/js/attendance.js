@@ -145,11 +145,80 @@ async function loadMembers() {
     }
 }
 
+//async function loadAttendanceForDate() {
+//    try {
+//        const dateStr = formatDateForInput(selectedDate);
+
+//        attendanceData = allMembers.map(member => {
+//            const mId = member.userId || member.UserId;
+//            const mName = member.name || member.Name;
+//            const mUser = member.username || member.Username;
+//            const mDept = member.department || member.Department;
+
+//            const existingRecord = attendances.find(a => {
+//                const dbDate = a.attendanceDate || a.AttendanceDate;
+//                const dbUserId = a.userId || a.UserId;
+//                const dbMeal = a.mealType || a.MealType;
+//                const dbDateStr = dbDate ? dbDate.substring(0, 10) : "";
+
+//                return dbUserId === mId && dbDateStr === dateStr && dbMeal === selectedMealType;
+//            });
+
+//            const attId = existingRecord ? (existingRecord.attendanceID || existingRecord.AttendanceID) : 0;
+
+//            const isTeaWater = existingRecord
+//                ? (existingRecord.teaWater !== undefined ? existingRecord.teaWater : existingRecord.TeaWater)
+//                : true;
+
+//            const isFood = existingRecord
+//                ? (existingRecord.food !== undefined ? existingRecord.food : existingRecord.Food)
+//                : false;
+
+//            // 3. Calculate Price Logic
+//            let finalPrice = 0;
+//            if (existingRecord) {
+//                // If record exists, trust the price in DB unless it's 0 and they have food/tea
+//                finalPrice = existingRecord.foodPrice || existingRecord.FoodPrice || 0;
+//            } else {
+//                // New Record Defaults
+//                if (isFood) {
+//                    finalPrice = calculateMealPrice(selectedMealType);
+//                } else if (isTeaWater) {
+//                    finalPrice = calculateTeaWaterCost();
+//                }
+//            }
+
+//            return {
+//                attendanceId: attId,
+//                userId: mId,
+//                name: mName,
+//                username: mUser,
+//                department: mDept,
+//                date: dateStr,
+//                mealType: selectedMealType,
+//                teaWater: isTeaWater,
+//                food: isFood,
+//                foodPrice: finalPrice
+//            };
+//        });
+
+//        renderAttendanceTable();
+//        updateStatistics();
+//        showLoading(false);
+//    } catch (error) {
+//        console.error('Error loading attendance:', error);
+//        showToast('Failed to load attendance', 'error');
+//        showLoading(false);
+//    }
+//}
 async function loadAttendanceForDate() {
     try {
         const dateStr = formatDateForInput(selectedDate);
 
-        attendanceData = allMembers.map(member => {
+       const activeMembers = allMembers.filter(m => m.isActive === true || m.IsActive === true);
+
+        // Now map only the active members
+        attendanceData = activeMembers.map(member => {
             const mId = member.userId || member.UserId;
             const mName = member.name || member.Name;
             const mUser = member.username || member.Username;
@@ -177,10 +246,8 @@ async function loadAttendanceForDate() {
             // 3. Calculate Price Logic
             let finalPrice = 0;
             if (existingRecord) {
-                // If record exists, trust the price in DB unless it's 0 and they have food/tea
                 finalPrice = existingRecord.foodPrice || existingRecord.FoodPrice || 0;
             } else {
-                // New Record Defaults
                 if (isFood) {
                     finalPrice = calculateMealPrice(selectedMealType);
                 } else if (isTeaWater) {
@@ -211,7 +278,6 @@ async function loadAttendanceForDate() {
         showLoading(false);
     }
 }
-
 // ========================================
 // 5. Render Table
 // ========================================
