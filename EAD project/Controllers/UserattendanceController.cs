@@ -14,30 +14,6 @@ namespace EAD_project.Controllers
     public class UserattendanceController : Controller
     {
         [HttpGet]
-        //public async Task<IActionResult> user_attendance()
-        //{
-        //  int? sessionUserId = HttpContext.Session.GetInt32("uet");
-        //    if (sessionUserId == null)
-        //    {
-        //         return RedirectToAction("login", "Login");
-        //    }
-        //  int currentUserId = sessionUserId.Value;
-
-
-
-        //    using (MessManagmentContext mydb = new MessManagmentContext())
-        //    {
-        //        var viewmodel = new AttendanceModel
-        //        {
-        //            attendance = await mydb.TblAttendances
-        //                                .Where(x => x.UserId == currentUserId)
-        //                                .ToListAsync(),
-        //            request = await mydb.TblRequests.Where(x => x.UserId == currentUserId).ToListAsync()
-        //        };
-        //        return View(viewmodel);
-        //    }
-
-        //}
         public async Task<IActionResult> user_attendance()
         {
             int? sessionUserId = HttpContext.Session.GetInt32("uet");
