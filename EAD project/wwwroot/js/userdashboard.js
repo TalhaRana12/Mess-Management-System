@@ -32,7 +32,7 @@ function displayCurrentDate() {
     }
 }
 
-// 2. Display Username (FIX: Split at '@')
+// 2. Display Username
 function displayUserName() {
     const userNameElements = document.querySelectorAll('#userName, #userNameBanner');
 
@@ -52,41 +52,40 @@ function displayUserName() {
     });
 }
 
-// 3. Load Statistics (FIX: Calculates Current Month Bill "Till Now")
+// 3. Load Statistics
 function loadStatistics() {
     let totalAttendance = 0;
     let totalMeals = 0;
-    let currentMonthBill = 0; // This tracks bill for this month so far
+    let currentMonthBill = 0;
 
     const now = new Date();
-    const currentMonthIdx = now.getMonth(); // 0-11
+    const currentMonthIdx = now.getMonth();
     const currentYear = now.getFullYear();
 
     // Loop through real attendance data
-    attendances.forEach(record => {
-        const recDate = new Date(record.attendanceDate);
+    if (typeof attendances !== 'undefined') {
+        attendances.forEach(record => {
+            const recDate = new Date(record.attendanceDate);
 
-        // Filter: Match Month and Year
-        if (recDate.getMonth() === currentMonthIdx && recDate.getFullYear() === currentYear) {
+            // Filter: Match Month and Year
+            if (recDate.getMonth() === currentMonthIdx && recDate.getFullYear() === currentYear) {
 
-            // Count Present Days
-            if (record.food === true) {
-                totalAttendance++;
-                totalMeals++;
-            } else if (record.teaWater === true) {
-                // If you count partial attendance as present, keep this. 
-                // If not, remove this 'else if' block for attendance count.
-                totalAttendance++;
+                // Count Present Days
+                if (record.food === true) {
+                    totalAttendance++;
+                    totalMeals++;
+                } else if (record.teaWater === true) {
+                    totalAttendance++;
+                }
+
+                // Sum up the Cost
+                currentMonthBill += (record.foodPrice || 0);
             }
-
-            // Sum up the Cost (FoodPrice contains the total cost for that day stored in DB)
-            // This creates the "Bill till now"
-            currentMonthBill += (record.foodPrice || 0);
-        }
-    });
+        });
+    }
 
     // Calculate attendance rate
-    const dayOfMonth = now.getDate(); // Days passed so far in month
+    const dayOfMonth = now.getDate();
     const attendanceRate = dayOfMonth > 0 ? Math.round((totalAttendance / dayOfMonth) * 100) : 0;
 
     // Update UI
@@ -104,13 +103,16 @@ function loadStatistics() {
     if (elCurBill) elCurBill.textContent = `Rs. ${parseFloat(currentMonthBill).toLocaleString()}`;
 }
 
-// 4. Load Today's Menu (FIX: Shows Prices for individual items)
+// 4. Load Today's Menu (FIXED ALIGNMENT)
 function loadTodaysMenu() {
     const today = new Date();
     const dayName = today.toLocaleDateString('en-US', { weekday: 'long' });
 
     const elTodayDay = document.getElementById('todayDay');
     if (elTodayDay) elTodayDay.textContent = dayName;
+
+    // Safety check for menu variable
+    if (typeof menu === 'undefined') return;
 
     const todaysItems = menu.filter(m => (m.dayOfWeek || m.DayOfWeek) === dayName);
     const lunchItems = todaysItems.filter(m => (m.mealType || m.MealType) === 'Lunch');
@@ -122,18 +124,32 @@ function loadTodaysMenu() {
         const priceEl = document.getElementById(priceId);
 
         if (ul) {
+            // Remove default list styling
+            ul.style.listStyle = 'none';
+            ul.style.paddingLeft = '0';
+
             if (items.length > 0) {
                 // Map items to include Name AND Price
                 ul.innerHTML = items.map(item => {
                     const name = item.dishName || item.DishName;
                     const price = item.price || item.Price || 0;
 
-                    // Display: Dish Name ........ Rs. 100
-                    return
-                    `<li style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 5px; gap: 10px;">
-                        <span>${name}</span>
-                        <span style="color: #198754; font-weight: 600;">Rs. ${price}</span>
-                    </li>`
+                    // FIX: Added text-align:left and flex-grow:1 to name span
+                    return `
+                    <li style="
+                        display: flex;
+                        width: 100%;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 6px;
+                        border-bottom: 1px dashed #eee;
+                        padding-bottom: 6px;
+                    ">
+                        <span style="text-align: left; flex-grow: 1;">${name}</span>
+                        <span style="color: #198754; font-weight: 600; white-space: nowrap;">
+                            Rs. ${price}
+                        </span>
+                    </li>`;
 
                 }).join('');
 
@@ -143,7 +159,7 @@ function loadTodaysMenu() {
                 if (priceEl) priceEl.textContent = `Rs. ${totalPrice}`;
                 return totalPrice;
             } else {
-                ul.innerHTML = '<li class="text-muted">No items served</li>';
+                ul.innerHTML = '<li class="text-muted" style="text-align:left;">No items served</li>';
                 if (priceEl) priceEl.textContent = 'Rs. 0';
                 return 0;
             }
@@ -163,7 +179,7 @@ function loadRecentBills() {
     const billListElement = document.getElementById('recentBills');
     if (!billListElement) return;
 
-    if (!bill || bill.length === 0) {
+    if (typeof bill === 'undefined' || !bill || bill.length === 0) {
         billListElement.innerHTML = '<p class="text-muted">No bills generated yet</p>';
         return;
     }
@@ -202,6 +218,7 @@ function loadRecentBills() {
 function loadWeekAttendance() {
     const weekAttendanceElement = document.getElementById('weekAttendance');
     if (!weekAttendanceElement) return;
+    if (typeof attendances === 'undefined') return;
 
     const daysToShow = 7;
     let attendanceHTML = '';
