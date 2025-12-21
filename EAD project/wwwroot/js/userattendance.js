@@ -1,24 +1,29 @@
-﻿// User Attendance Management System
+﻿// ========================================
+// Global Variables & Configuration
 // ========================================
 
-// Global Variables
+// 'attendance' variable is defined in the Razor View:
+// let attendance = @Html.Raw(Json.Serialize(Model));
+
 let currentUser = {
-    userId: 1,
-    name: 'Ahmed Ali',
-    username: 'ahmed.ali'
+    // We can pull the ID from the first record if it exists, or keep hardcoded for now
+    userId: (attendance && attendance.length > 0) ? attendance[0].userId : 1,
+    name: 'User', // You can pass this from C# ViewBag if needed
+    username: 'user'
 };
 
 let attendanceRecords = [];
 let selectedMonth = new Date();
 let selectedAttendanceId = null;
-const TEA_WATER_PRICE = 50; // Rs. 50 per day
 
-// ========================================
-// Initialize
-// ========================================
+// Configuration
+const TEA_WATER_PRICE = 50; // Rs. 50 per day (Fixed cost if TeaWater bit is 1)
+
 document.addEventListener('DOMContentLoaded', function () {
     initializeMonthPicker();
     setupEventListeners();
+
+    // Initial Load
     loadUserAttendance();
 
     // Sidebar toggle for mobile
@@ -41,17 +46,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Set user name
-    document.getElementById('userName').textContent = currentUser.name;
+    if (document.getElementById('userName')) {
+        document.getElementById('userName').textContent = currentUser.name;
+    }
 });
 
-// ========================================
-// Month Picker Functions
-// ========================================
 function initializeMonthPicker() {
     const monthInput = document.getElementById('attendanceMonth');
-
-    // Set current month
-    monthInput.value = formatMonthForInput(selectedMonth);
+    if (monthInput) {
+        monthInput.value = formatMonthForInput(selectedMonth);
+    }
     updateMonthDisplay();
 }
 
@@ -68,8 +72,9 @@ function formatMonthDisplay(date) {
 
 function updateMonthDisplay() {
     const monthDisplay = document.getElementById('selectedMonthDisplay');
-    monthDisplay.textContent = formatMonthDisplay(selectedMonth);
-
+    if (monthDisplay) {
+        monthDisplay.textContent = formatMonthDisplay(selectedMonth);
+    }
     // Reload attendance for new month
     loadUserAttendance();
 }
@@ -79,36 +84,51 @@ function updateMonthDisplay() {
 // ========================================
 function setupEventListeners() {
     // Month navigation
-    document.getElementById('prevMonthBtn').addEventListener('click', () => {
-        selectedMonth.setMonth(selectedMonth.getMonth() - 1);
-        document.getElementById('attendanceMonth').value = formatMonthForInput(selectedMonth);
-        updateMonthDisplay();
-    });
+    const prevBtn = document.getElementById('prevMonthBtn');
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            selectedMonth.setMonth(selectedMonth.getMonth() - 1);
+            document.getElementById('attendanceMonth').value = formatMonthForInput(selectedMonth);
+            updateMonthDisplay();
+        });
+    }
 
-    document.getElementById('nextMonthBtn').addEventListener('click', () => {
-        selectedMonth.setMonth(selectedMonth.getMonth() + 1);
-        document.getElementById('attendanceMonth').value = formatMonthForInput(selectedMonth);
-        updateMonthDisplay();
-    });
+    const nextBtn = document.getElementById('nextMonthBtn');
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            selectedMonth.setMonth(selectedMonth.getMonth() + 1);
+            document.getElementById('attendanceMonth').value = formatMonthForInput(selectedMonth);
+            updateMonthDisplay();
+        });
+    }
 
-    document.getElementById('currentMonthBtn').addEventListener('click', () => {
-        selectedMonth = new Date();
-        document.getElementById('attendanceMonth').value = formatMonthForInput(selectedMonth);
-        updateMonthDisplay();
-    });
+    const currBtn = document.getElementById('currentMonthBtn');
+    if (currBtn) {
+        currBtn.addEventListener('click', () => {
+            selectedMonth = new Date();
+            document.getElementById('attendanceMonth').value = formatMonthForInput(selectedMonth);
+            updateMonthDisplay();
+        });
+    }
 
-    document.getElementById('attendanceMonth').addEventListener('change', (e) => {
-        const [year, month] = e.target.value.split('-');
-        selectedMonth = new Date(year, month - 1, 1);
-        updateMonthDisplay();
-    });
+    const monthInput = document.getElementById('attendanceMonth');
+    if (monthInput) {
+        monthInput.addEventListener('change', (e) => {
+            const [year, month] = e.target.value.split('-');
+            selectedMonth = new Date(year, month - 1, 1);
+            updateMonthDisplay();
+        });
+    }
 
     // Modal confirm buttons
-    document.getElementById('confirmVerifyBtn').addEventListener('click', confirmVerification);
+    const confirmBtn = document.getElementById('confirmVerifyBtn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', confirmVerification);
+    }
 }
 
 // ========================================
-// Load User Attendance
+// Load User Attendance (FROM C# DATA)
 // ========================================
 async function loadUserAttendance() {
     showLoading(true);
@@ -117,64 +137,61 @@ async function loadUserAttendance() {
         const year = selectedMonth.getFullYear();
         const month = selectedMonth.getMonth() + 1;
 
-        // Simulated API call - Replace with actual C# API endpoint
-        // const response = await fetch(`/api/Attendance/GetUserAttendance?userId=${currentUser.userId}&year=${year}&month=${month}`);
-        // attendanceRecords = await response.json();
+        // 1. Filter the global 'attendance' list passed from C# Model
+        // We filter locally because the controller sent all history
+        const filteredData = attendance.filter(record => {
+            // Handle Case: Json.Serialize might make props camelCase or PascalCase
+            const dateStr = record.date || record.Date;
+            const recordDate = new Date(dateStr);
+            return recordDate.getFullYear() === year && (recordDate.getMonth() + 1) === month;
+        });
 
-        // Mock attendance data based on your table structure
-        attendanceRecords = generateMockAttendance(year, month);
+        // 2. Map Database Model to UI Logic
+        attendanceRecords = filteredData.map(record => {
+            const dateStr = record.date || record.Date;
+            const dateObj = new Date(dateStr);
+
+            // Handle Casing (Pascal vs Camel)
+            const dbTeaWater = (record.teaWater !== undefined) ? record.teaWater : record.TeaWater;
+            const dbFoodPrice = (record.foodPrice !== undefined) ? record.foodPrice : record.FoodPrice;
+            const dbAttendanceId = (record.attendanceID !== undefined) ? record.attendanceID : record.AttendanceId;
+            const dbUserId = (record.userID !== undefined) ? record.userID : record.UserId;
+
+            // Calculations
+            // Cost of Tea/Water is fixed (50) if boolean is true
+            const teaWaterCost = dbTeaWater ? TEA_WATER_PRICE : 0;
+
+            // DB has one 'FoodPrice'. We assign it to 'lunchPrice' for display purposes
+            // since the DB doesn't distinguish between Lunch/Dinner prices.
+            const foodCost = dbFoodPrice || 0;
+
+            // Total Daily Cost
+            const total = teaWaterCost + foodCost;
+
+            return {
+                attendanceId: dbAttendanceId,
+                userId: dbUserId,
+                date: dateStr.split('T')[0], // ISO Date
+                dayName: dateObj.toLocaleDateString('en-US', { weekday: 'long' }),
+                teaWater: dbTeaWater,
+                foodPrice: foodCost,
+                // UI Specific Mappings:
+                lunchPrice: foodCost, // Mapping DB FoodPrice to Lunch column
+                dinnerPrice: 0,       // Setting Dinner to 0 as DB structure is simple
+                totalCost: total,
+                sentToAdmin: false    // DB currently has no column for this, default to false
+            };
+        });
 
         renderAttendanceTable();
         updateStatistics();
         updateCostBreakdown();
         showLoading(false);
     } catch (error) {
-        console.error('Error loading attendance:', error);
-        showToast('Failed to load attendance records', 'error');
+        console.error('Error processing attendance data:', error);
+        showToast('Failed to process attendance records', 'error');
         showLoading(false);
     }
-}
-
-// Generate mock attendance data for demonstration
-function generateMockAttendance(year, month) {
-    const records = [];
-    const daysInMonth = new Date(year, month, 0).getDate();
-
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, month - 1, day);
-        const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-
-        // Generate random attendance for demonstration
-        const hasTeaWater = Math.random() > 0.1; // 90% chance
-        const hasLunch = hasTeaWater && Math.random() > 0.3; // 70% of tea/water days
-        const hasDinner = hasTeaWater && Math.random() > 0.4; // 60% of tea/water days
-
-        // Random lunch and dinner prices (based on menu)
-        const lunchPrice = hasLunch ? (Math.floor(Math.random() * 3) + 1) * 50 + 100 : 0; // 150-250
-        const dinnerPrice = hasDinner ? (Math.floor(Math.random() * 2) + 1) * 50 + 50 : 0; // 100-150
-
-        // Calculate total cost: Tea/Water (if present) + Lunch + Dinner
-        const totalCost = (hasTeaWater ? TEA_WATER_PRICE : 0) + lunchPrice + dinnerPrice;
-
-        // Random sent to admin status
-        const sentToAdmin = day < new Date().getDate() && Math.random() > 0.6; // Some sent
-
-        records.push({
-            attendanceId: records.length + 1,
-            userId: currentUser.userId,
-            date: date.toISOString().split('T')[0],
-            dayName: dayName,
-            teaWater: hasTeaWater,
-            food: hasLunch || hasDinner, // Food bit indicates any meal consumption
-            foodPrice: lunchPrice + dinnerPrice,
-            lunchPrice: lunchPrice,
-            dinnerPrice: dinnerPrice,
-            totalCost: totalCost,
-            sentToAdmin: sentToAdmin
-        });
-    }
-
-    return records;
 }
 
 // ========================================
@@ -182,6 +199,8 @@ function generateMockAttendance(year, month) {
 // ========================================
 function renderAttendanceTable() {
     const tbody = document.getElementById('attendanceTableBody');
+    if (!tbody) return;
+
     tbody.innerHTML = '';
 
     if (attendanceRecords.length === 0) {
@@ -209,12 +228,13 @@ function renderAttendanceTable() {
                 <i class="bi bi-${record.teaWater ? 'check-circle-fill status-icon present' : 'x-circle-fill status-icon absent'}"></i>
             </td>
             <td class="text-center">
+                <!-- Using Lunch Column for Main Food Price -->
                 <i class="bi bi-${record.lunchPrice > 0 ? 'check-circle-fill status-icon present' : 'x-circle-fill status-icon absent'}"></i>
                 ${record.lunchPrice > 0 ? `<br><small class="text-muted">Rs. ${record.lunchPrice}</small>` : ''}
             </td>
             <td class="text-center">
-                <i class="bi bi-${record.dinnerPrice > 0 ? 'check-circle-fill status-icon present' : 'x-circle-fill status-icon absent'}"></i>
-                ${record.dinnerPrice > 0 ? `<br><small class="text-muted">Rs. ${record.dinnerPrice}</small>` : ''}
+                <!-- Dinner Column (Empty based on current DB Schema) -->
+                <i class="bi bi-dash-circle status-icon absent" style="opacity: 0.5"></i>
             </td>
             <td class="text-end">
                 <span class="cost-display">Rs. ${record.totalCost}</span>
@@ -223,7 +243,7 @@ function renderAttendanceTable() {
                 <div class="action-btn-group" id="actions-${record.attendanceId}">
                     ${record.sentToAdmin
                 ? `<button class="btn btn-sent" disabled>
-                            <i class="bi bi-check-circle-fill me-1"></i>Sent to Admin
+                            <i class="bi bi-check-circle-fill me-1"></i>Sent
                            </button>`
                 : `<button class="btn btn-verify" onclick="openVerifyModal(${record.attendanceId})">
                             <i class="bi bi-send me-1"></i>Verify
@@ -238,25 +258,18 @@ function renderAttendanceTable() {
 }
 
 // ========================================
-// Filter Attendance
-// ========================================
-function filterAttendance() {
-    renderAttendanceTable();
-    updateStatistics();
-}
-
-// ========================================
 // Update Statistics
 // ========================================
 function updateStatistics() {
     const totalDays = attendanceRecords.length;
-    const totalMeals = attendanceRecords.filter(r => r.lunchPrice > 0 || r.dinnerPrice > 0).length;
+    // Count days where food was eaten (Price > 0)
+    const totalMeals = attendanceRecords.filter(r => r.lunchPrice > 0).length;
     const monthTotal = attendanceRecords.reduce((sum, r) => sum + r.totalCost, 0);
 
-    document.getElementById('totalDays').textContent = totalDays;
-    document.getElementById('totalMeals').textContent = totalMeals;
-    document.getElementById('monthTotal').textContent = `Rs. ${monthTotal}`;
-    document.getElementById('monthlyTotalCost').textContent = `Rs. ${monthTotal}`;
+    setTextContent('totalDays', totalDays);
+    setTextContent('totalMeals', totalMeals);
+    setTextContent('monthTotal', `Rs. ${monthTotal}`);
+    setTextContent('monthlyTotalCost', `Rs. ${monthTotal}`);
 }
 
 // ========================================
@@ -264,25 +277,31 @@ function updateStatistics() {
 // ========================================
 function updateCostBreakdown() {
     const teaWaterDays = attendanceRecords.filter(r => r.teaWater).length;
+    // Using lunchPrice as the main food price container
     const lunchCount = attendanceRecords.filter(r => r.lunchPrice > 0).length;
-    const dinnerCount = attendanceRecords.filter(r => r.dinnerPrice > 0).length;
 
     const teaWaterTotal = teaWaterDays * TEA_WATER_PRICE;
     const lunchTotal = attendanceRecords.reduce((sum, r) => sum + r.lunchPrice, 0);
-    const dinnerTotal = attendanceRecords.reduce((sum, r) => sum + r.dinnerPrice, 0);
-    const grandTotal = teaWaterTotal + lunchTotal + dinnerTotal;
+    const grandTotal = teaWaterTotal + lunchTotal;
 
-    document.getElementById('teaWaterDays').textContent = teaWaterDays;
-    document.getElementById('teaWaterPrice').textContent = TEA_WATER_PRICE;
-    document.getElementById('teaWaterTotal').textContent = teaWaterTotal;
+    setTextContent('teaWaterDays', teaWaterDays);
+    setTextContent('teaWaterPrice', TEA_WATER_PRICE);
+    setTextContent('teaWaterTotal', teaWaterTotal);
 
-    document.getElementById('lunchCount').textContent = lunchCount;
-    document.getElementById('lunchTotal').textContent = lunchTotal;
+    setTextContent('lunchCount', lunchCount);
+    setTextContent('lunchTotal', lunchTotal);
 
-    document.getElementById('dinnerCount').textContent = dinnerCount;
-    document.getElementById('dinnerTotal').textContent = dinnerTotal;
+    // Zero out dinner stats for now
+    setTextContent('dinnerCount', 0);
+    setTextContent('dinnerTotal', 0);
 
-    document.getElementById('grandTotal').textContent = grandTotal;
+    setTextContent('grandTotal', grandTotal);
+}
+
+// Helper to safely set text content
+function setTextContent(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
 }
 
 // ========================================
@@ -312,12 +331,8 @@ function openVerifyModal(attendanceId) {
             <span class="detail-value">${record.teaWater ? 'Yes (Rs. ' + TEA_WATER_PRICE + ')' : 'No'}</span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">Lunch:</span>
+            <span class="detail-label">Food (Meal):</span>
             <span class="detail-value">${record.lunchPrice > 0 ? 'Yes (Rs. ' + record.lunchPrice + ')' : 'No'}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Dinner:</span>
-            <span class="detail-value">${record.dinnerPrice > 0 ? 'Yes (Rs. ' + record.dinnerPrice + ')' : 'No'}</span>
         </div>
         <div class="detail-row">
             <span class="detail-label">Total Cost:</span>
@@ -325,10 +340,14 @@ function openVerifyModal(attendanceId) {
         </div>
     `;
 
-    document.getElementById('verificationDetails').innerHTML = detailsHtml;
+    const detailContainer = document.getElementById('verificationDetails');
+    if (detailContainer) detailContainer.innerHTML = detailsHtml;
 
-    const modal = new bootstrap.Modal(document.getElementById('verifyModal'));
-    modal.show();
+    const modalEl = document.getElementById('verifyModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
 }
 
 async function confirmVerification() {
@@ -337,20 +356,15 @@ async function confirmVerification() {
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
 
-        // Simulated API call - Replace with actual C# API endpoint
-        // const response = await fetch(`/api/Attendance/SendToAdmin`, {
+        // TODO: Create a C# Controller Action to handle this
+        // const response = await fetch(`/Attendance/Verify`, {
         //     method: 'POST',
         //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({
-        //         attendanceId: selectedAttendanceId,
-        //         userId: currentUser.userId
-        //     })
+        //     body: JSON.stringify({ id: selectedAttendanceId })
         // });
 
-        // if (!response.ok) throw new Error('Failed to send');
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Simulate API delay for now
+        await new Promise(resolve => setTimeout(resolve, 800));
 
         // Update local record
         const record = attendanceRecords.find(r => r.attendanceId === selectedAttendanceId);
@@ -359,20 +373,20 @@ async function confirmVerification() {
         }
 
         // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('verifyModal'));
+        const modalEl = document.getElementById('verifyModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
         modal.hide();
 
         // Update UI
         renderAttendanceTable();
-        updateStatistics();
 
-        showToast('Attendance sent to admin for verification!', 'success');
+        showToast('Attendance verified successfully!', 'success');
 
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-send me-2"></i>Send to Admin';
     } catch (error) {
         console.error('Error sending attendance:', error);
-        showToast('Failed to send attendance to admin', 'error');
+        showToast('Failed to send attendance', 'error');
 
         const btn = document.getElementById('confirmVerifyBtn');
         btn.disabled = false;
@@ -387,21 +401,24 @@ function showLoading(show) {
     const loadingState = document.getElementById('loadingState');
     const tableBody = document.getElementById('attendanceTableBody');
 
-    if (show) {
-        loadingState.style.display = 'block';
-        tableBody.innerHTML = '';
-    } else {
-        loadingState.style.display = 'none';
+    if (loadingState && tableBody) {
+        if (show) {
+            loadingState.style.display = 'block';
+            tableBody.innerHTML = '';
+        } else {
+            loadingState.style.display = 'none';
+        }
     }
 }
 
 function showEmptyState(show) {
     const emptyState = document.getElementById('emptyState');
-    emptyState.style.display = show ? 'block' : 'none';
+    if (emptyState) {
+        emptyState.style.display = show ? 'block' : 'none';
+    }
 }
 
 function showToast(message, type = 'success') {
-    // Create toast container if it doesn't exist
     let toastContainer = document.querySelector('.toast-container');
     if (!toastContainer) {
         toastContainer = document.createElement('div');
@@ -409,7 +426,6 @@ function showToast(message, type = 'success') {
         document.body.appendChild(toastContainer);
     }
 
-    // Create toast element
     const toast = document.createElement('div');
     toast.className = `toast toast-${type} show`;
     toast.innerHTML = `
@@ -421,7 +437,6 @@ function showToast(message, type = 'success') {
 
     toastContainer.appendChild(toast);
 
-    // Auto remove after 4 seconds
     setTimeout(() => {
         toast.remove();
     }, 4000);

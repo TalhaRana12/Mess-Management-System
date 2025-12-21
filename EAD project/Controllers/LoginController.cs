@@ -27,6 +27,7 @@ namespace EAD_project.Controllers
                     }
                     else if (user.Role == "Member") // Make sure this string matches exactly what is in your Database
                     {
+                        HttpContext.Session.SetInt32("uet", user.UserId);
                         return RedirectToAction("user_dashboard", "Userdashboard", new { id = user.UserId });
                     }
                     else
