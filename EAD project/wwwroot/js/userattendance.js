@@ -128,112 +128,6 @@ function updateMonthInputAndDisplay() {
 // ========================================
 // Load User Attendance (Logic)
 // ========================================
-//async function loadUserAttendance() {
-//    showLoading(true);
-
-//    try {
-//        const year = selectedMonth.getFullYear();
-//        const month = selectedMonth.getMonth() + 1;
-
-//        // 1. Check if data exists
-//        if (!safeAttendanceData || safeAttendanceData.length === 0) {
-//            console.warn("No attendance data found.");
-//            attendanceRecords = [];
-//            renderAttendanceTable();
-//            showLoading(false);
-//            return;
-//        }
-
-//        // 2. Filter data for the selected month
-//        const filteredData = safeAttendanceData.filter(record => {
-//            // Support C# Property 'AttendanceDate' or JS camelCase 'attendanceDate'
-//            const dateStr = record.attendanceDate || record.AttendanceDate;
-
-//            if (!dateStr) return false;
-
-//            const recordDate = new Date(dateStr);
-//            return recordDate.getFullYear() === year && (recordDate.getMonth() + 1) === month;
-//        });
-
-//        // =========================================================
-//        // GROUPING LOGIC: Merge Lunch & Dinner rows by Date
-//        // =========================================================
-//        const groupedData = {};
-
-//        filteredData.forEach(record => {
-//            // Get properties with safe casing checks
-//            const dateStr = record.attendanceDate || record.AttendanceDate;
-//            // Handle mealType safely (it might be null)
-//            const mealType = record.mealType || record.MealType || "";
-//            const foodPrice = (record.foodPrice !== undefined) ? record.foodPrice : record.FoodPrice;
-//            const teaWater = (record.teaWater !== undefined) ? record.teaWater : record.TeaWater;
-//            const attId = (record.attendanceId !== undefined) ? record.attendanceId : record.AttendanceId;
-//            const uId = (record.userId !== undefined) ? record.userId : record.UserId;
-
-//            // Initialize object for this date if not exists
-//            if (!groupedData[dateStr]) {
-//                groupedData[dateStr] = {
-//                    attendanceId: attId, // Store the first ID found
-//                    userId: uId,
-//                    date: dateStr,
-//                    dayName: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' }),
-//                    teaWater: false,
-//                    lunchPrice: 0,
-//                    dinnerPrice: 0,
-//                    sentToAdmin: false
-//                };
-//            }
-
-//            const currentDay = groupedData[dateStr];
-
-//            // 1. Merge Tea/Water (True if true in ANY record for this day)
-//            if (teaWater === true) {
-//                currentDay.teaWater = true;
-//            }
-
-//            // 2. Merge Prices based on MealType
-//            const type = mealType.toLowerCase();
-
-//            // FIXED LOGIC: Only assign price if explicitly Lunch or Dinner
-//            if (type.includes("lunch")) {
-//                currentDay.lunchPrice = foodPrice || 0;
-//            }
-//            else if (type.includes("dinner")) {
-//                currentDay.dinnerPrice = foodPrice || 0;
-//            }
-
-//            // Previous fallback code removed to prevent Tea-only records from adding Lunch price
-//        });
-
-//        // 3. Convert Object back to Array and Calculate Totals
-//        attendanceRecords = Object.values(groupedData).map(day => {
-//            // Tea cost is fixed at 50 if the bit is true
-//            const teaWaterCost = day.teaWater ? TEA_WATER_PRICE : 0;
-
-//            // Total cost = Tea Cost + Lunch Price + Dinner Price
-//            const total = teaWaterCost + day.lunchPrice + day.dinnerPrice;
-
-//            return {
-//                ...day,
-//                totalCost: total
-//            };
-//        });
-
-//        // Sort by date (oldest to newest)
-//        attendanceRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-//        renderAttendanceTable();
-//        updateStatistics();
-//        updateCostBreakdown();
-//        showLoading(false);
-
-//    } catch (error) {
-//        console.error('Error processing attendance data:', error);
-//        console.log('Raw Data:', safeAttendanceData);
-//        showToast('Failed to process attendance records', 'error');
-//        showLoading(false);
-//    }
-//}
 async function loadUserAttendance() {
     showLoading(true);
 
@@ -270,6 +164,10 @@ async function loadUserAttendance() {
             const mealTypeRaw = record.mealType || record.MealType || "";
             const rawPrice = (record.foodPrice !== undefined) ? record.foodPrice : record.FoodPrice;
             const teaWater = (record.teaWater !== undefined) ? record.teaWater : record.TeaWater;
+
+            // NEW: Get the Food boolean to check presence
+            const isFood = (record.food !== undefined) ? record.food : record.Food;
+
             const attId = (record.attendanceId !== undefined) ? record.attendanceId : record.AttendanceId;
             const uId = (record.userId !== undefined) ? record.userId : record.UserId;
 
@@ -284,7 +182,9 @@ async function loadUserAttendance() {
                     date: dateStr,
                     dayName: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' }),
                     teaWater: false,
+                    hasLunch: false,   // Track lunch presence
                     lunchPrice: 0,
+                    hasDinner: false,  // Track dinner presence
                     dinnerPrice: 0,
                     sentToAdmin: false
                 };
@@ -297,25 +197,24 @@ async function loadUserAttendance() {
                 currentDay.teaWater = true;
             }
 
-            // 2. Merge Prices based on MealType
+            // 2. Merge Prices based on MealType & Food Boolean
             const type = mealTypeRaw.toLowerCase().trim();
 
-            // ONLY assign price if the MealType explicitly contains "lunch" or "dinner"
             if (type.includes("lunch")) {
-                // If this record says Lunch, update the price. 
-                // Using Math.max ensures that if we have a 0 price record and a >0 price record, we keep the cost.
-                // However, usually it's just one record, so direct assignment is fine.
-                // We use || 0 to be double sure it's numeric.
-                if (foodPrice > 0) {
+                // Logic Change: Check if Food boolean is true
+                if (isFood === true) {
+                    currentDay.hasLunch = true;
+                    // Only assign price if they actually had food
                     currentDay.lunchPrice = foodPrice;
                 }
             }
             else if (type.includes("dinner")) {
-                if (foodPrice > 0) {
+                // Logic Change: Check if Food boolean is true
+                if (isFood === true) {
+                    currentDay.hasDinner = true;
                     currentDay.dinnerPrice = foodPrice;
                 }
             }
-            // NO 'ELSE': Unknown meal types (like 'TeaOnly') will NOT affect lunch/dinner prices
         });
 
         // 3. Convert Object back to Array and Calculate Totals
@@ -349,6 +248,7 @@ async function loadUserAttendance() {
         showLoading(false);
     }
 }
+
 // ========================================
 // Render Attendance Table
 // ========================================
@@ -371,6 +271,7 @@ function renderAttendanceTable() {
         const date = new Date(record.date);
         const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
+        // Logic updated: Use hasLunch/hasDinner for icons
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>
@@ -387,13 +288,13 @@ function renderAttendanceTable() {
             
             <!-- Lunch -->
             <td class="text-center">
-                <i class="bi bi-${record.lunchPrice > 0 ? 'check-circle-fill status-icon present' : 'x-circle-fill status-icon absent'}"></i>
+                <i class="bi bi-${record.hasLunch ? 'check-circle-fill status-icon present' : 'x-circle-fill status-icon absent'}"></i>
                 ${record.lunchPrice > 0 ? `<br><small class="text-muted">Rs. ${record.lunchPrice}</small>` : ''}
             </td>
             
             <!-- Dinner -->
             <td class="text-center">
-                <i class="bi bi-${record.dinnerPrice > 0 ? 'check-circle-fill status-icon present' : 'x-circle-fill status-icon absent'}"></i>
+                <i class="bi bi-${record.hasDinner ? 'check-circle-fill status-icon present' : 'x-circle-fill status-icon absent'}"></i>
                 ${record.dinnerPrice > 0 ? `<br><small class="text-muted">Rs. ${record.dinnerPrice}</small>` : ''}
             </td>
             
@@ -427,11 +328,11 @@ function renderAttendanceTable() {
 function updateStatistics() {
     const totalDays = attendanceRecords.length;
 
-    // Calculate Total Meals (Lunch Count + Dinner Count)
+    // Calculate Total Meals based on 'Food' boolean presence
     let totalMeals = 0;
     attendanceRecords.forEach(r => {
-        if (r.lunchPrice > 0) totalMeals++;
-        if (r.dinnerPrice > 0) totalMeals++;
+        if (r.hasLunch) totalMeals++;
+        if (r.hasDinner) totalMeals++;
     });
 
     const monthTotal = attendanceRecords.reduce((sum, r) => sum + r.totalCost, 0);
@@ -450,12 +351,12 @@ function updateCostBreakdown() {
     const teaWaterDays = attendanceRecords.filter(r => r.teaWater).length;
     const teaWaterTotal = teaWaterDays * TEA_WATER_PRICE;
 
-    // 2. Lunch
-    const lunchCount = attendanceRecords.filter(r => r.lunchPrice > 0).length;
+    // 2. Lunch (Count based on Food boolean)
+    const lunchCount = attendanceRecords.filter(r => r.hasLunch).length;
     const lunchTotal = attendanceRecords.reduce((sum, r) => sum + r.lunchPrice, 0);
 
-    // 3. Dinner
-    const dinnerCount = attendanceRecords.filter(r => r.dinnerPrice > 0).length;
+    // 3. Dinner (Count based on Food boolean)
+    const dinnerCount = attendanceRecords.filter(r => r.hasDinner).length;
     const dinnerTotal = attendanceRecords.reduce((sum, r) => sum + r.dinnerPrice, 0);
 
     // 4. Grand Total
@@ -511,11 +412,13 @@ function openVerifyModal(attendanceId) {
         </div>
         <div class="detail-row">
             <span class="detail-label">Lunch:</span>
-            <span class="detail-value">${record.lunchPrice > 0 ? 'Yes (Rs. ' + record.lunchPrice + ')' : 'No'}</span>
+            <!-- Logic updated to show Yes if Food boolean is true -->
+            <span class="detail-value">${record.hasLunch ? 'Yes (Rs. ' + record.lunchPrice + ')' : 'No'}</span>
         </div>
         <div class="detail-row">
             <span class="detail-label">Dinner:</span>
-            <span class="detail-value">${record.dinnerPrice > 0 ? 'Yes (Rs. ' + record.dinnerPrice + ')' : 'No'}</span>
+            <!-- Logic updated to show Yes if Food boolean is true -->
+            <span class="detail-value">${record.hasDinner ? 'Yes (Rs. ' + record.dinnerPrice + ')' : 'No'}</span>
         </div>
         <div class="detail-row">
             <span class="detail-label">Total Cost:</span>
