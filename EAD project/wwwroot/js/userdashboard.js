@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function () {
 function initializeDashboard() {
     displayCurrentDate();
     displayUserName();
-    loadStatistics();
     loadTodaysMenu();
     loadRecentBills();
     loadWeekAttendance();
@@ -56,86 +55,86 @@ function displayUserName() {
 }
 
 // 3. Load Statistics (FIXED LOGIC)
-function loadStatistics() {
-    let totalAttendanceDays = 0;
-    let totalMeals = 0;
-    let currentMonthBill = 0;
+//function () {
+//    let totalAttendanceDays = 0;
+//    let totalMeals = 0;
+//    let currentMonthBill = 0;
 
-    const now = new Date();
-    const currentMonthIdx = now.getMonth(); // 0-11
-    const currentYear = now.getFullYear();
+//    const now = new Date();
+//    const currentMonthIdx = now.getMonth(); // 0-11
+//    const currentYear = now.getFullYear();
 
-    // Set to store unique days (removes duplicates if lunch & dinner on same day)
-    const uniquePresentDays = new Set();
+//    // Set to store unique days (removes duplicates if lunch & dinner on same day)
+//    const uniquePresentDays = new Set();
 
-    if (typeof attendances !== 'undefined' && attendances !== null) {
-        attendances.forEach(record => {
-            // Safe Property Access
-            const dateStr = record.attendanceDate || record.AttendanceDate;
-            const isFood = isTrue(record.food || record.Food);
-            const isTea = isTrue(record.teaWater || record.TeaWater);
-            const price = record.foodPrice || record.FoodPrice || 0;
+//    if (typeof attendances !== 'undefined' && attendances !== null) {
+//        attendances.forEach(record => {
+//            // Safe Property Access
+//            const dateStr = record.attendanceDate || record.AttendanceDate;
+//            const isFood = isTrue(record.food || record.Food);
+//            const isTea = isTrue(record.teaWater || record.TeaWater);
+//            const price = record.foodPrice || record.FoodPrice || 0;
 
-            if (!dateStr) return;
+//            if (!dateStr) return;
 
-            const recDate = new Date(dateStr);
+//            const recDate = new Date(dateStr);
 
-            // Filter: Match Current Month and Year
-            if (recDate.getMonth() === currentMonthIdx && recDate.getFullYear() === currentYear) {
+//            // Filter: Match Current Month and Year
+//            if (recDate.getMonth() === currentMonthIdx && recDate.getFullYear() === currentYear) {
 
-                // --- BILL CALCULATION ---
-                // 1. Add Food Price
-                currentMonthBill += price;
+//                // --- BILL CALCULATION ---
+//                // 1. Add Food Price
+//                currentMonthBill += price;
 
-                // 2. Add Tea/Water Price (Add for EVERY instance)
-                if (isTea) {
-                    currentMonthBill += TEA_WATER_PRICE;
-                }
+//                // 2. Add Tea/Water Price (Add for EVERY instance)
+//                if (isTea) {
+//                    currentMonthBill += TEA_WATER_PRICE;
+//                }
 
-                // --- COUNTS ---
-                if (isFood) {
-                    totalMeals++;
-                }
+//                // --- COUNTS ---
+//                if (isFood) {
+//                    totalMeals++;
+//                }
 
-                // --- ATTENDANCE TRACKING ---
-                // If they took Food OR Tea, mark this DATE as present
-                if (isFood || isTea) {
-                    // Use ISO string YYYY-MM-DD to handle unique days correctly
-                    const dateKey = dateStr.split('T')[0];
-                    uniquePresentDays.add(dateKey);
-                }
-            }
-        });
-    }
+//                // --- ATTENDANCE TRACKING ---
+//                // If they took Food OR Tea, mark this DATE as present
+//                if (isFood || isTea) {
+//                    // Use ISO string YYYY-MM-DD to handle unique days correctly
+//                    const dateKey = dateStr.split('T')[0];
+//                    uniquePresentDays.add(dateKey);
+//                }
+//            }
+//        });
+//    }
 
-    // Total unique days user visited the mess
-    totalAttendanceDays = uniquePresentDays.size;
+//    // Total unique days user visited the mess
+//    totalAttendanceDays = uniquePresentDays.size;
 
-    // --- PERCENTAGE CALCULATION ---
-    // Option A: (Days Present / Days Passed in Month) -> Shows "Consistency"
-    // Option B: (Days Present / Total Days in Month) -> Shows "Monthly Utilization"
+//    // --- PERCENTAGE CALCULATION ---
+//    // Option A: (Days Present / Days Passed in Month) -> Shows "Consistency"
+//    // Option B: (Days Present / Total Days in Month) -> Shows "Monthly Utilization"
 
-    // We use Option B (Total Days in Month) to avoid "100%" on Day 1
-    const totalDaysInMonth = new Date(currentYear, currentMonthIdx + 1, 0).getDate();
+//    // We use Option B (Total Days in Month) to avoid "100%" on Day 1
+//    const totalDaysInMonth = new Date(currentYear, currentMonthIdx + 1, 0).getDate();
 
-    let attendanceRate = 0;
-    if (totalDaysInMonth > 0) {
-        attendanceRate = Math.round((totalAttendanceDays / totalDaysInMonth) * 100);
-    }
+//    let attendanceRate = 0;
+//    if (totalDaysInMonth > 0) {
+//        attendanceRate = Math.round((totalAttendanceDays / totalDaysInMonth) * 100);
+//    }
 
-    // Update UI Elements
-    const elTotalAtt = document.getElementById('totalAttendance');
-    if (elTotalAtt) elTotalAtt.textContent = totalAttendanceDays;
+//    // Update UI Elements
+//    const elTotalAtt = document.getElementById('totalAttendance');
+//    if (elTotalAtt) elTotalAtt.textContent = totalAttendanceDays;
 
-    const elMealCount = document.getElementById('mealCount');
-    if (elMealCount) elMealCount.textContent = totalMeals;
+//    const elMealCount = document.getElementById('mealCount');
+//    if (elMealCount) elMealCount.textContent = totalMeals;
 
-    const elAttRate = document.getElementById('attendanceRate');
-    if (elAttRate) elAttRate.textContent = `${attendanceRate}%`;
+//    const elAttRate = document.getElementById('attendanceRate');
+//    if (elAttRate) elAttRate.textContent = `${attendanceRate}%`;
 
-    const elCurBill = document.getElementById('currentBill');
-    if (elCurBill) elCurBill.textContent = `Rs. ${parseFloat(currentMonthBill).toLocaleString()}`;
-}
+//    const elCurBill = document.getElementById('currentBill');
+//    if (elCurBill) elCurBill.textContent = `Rs. ${parseFloat(currentMonthBill).toLocaleString()}`;
+//}
 
 // 4. Load Today's Menu
 function loadTodaysMenu() {
@@ -340,6 +339,5 @@ function viewProfile() {
 
 // Auto-refresh stats every 5 minutes
 setInterval(function () {
-    loadStatistics();
     loadTodaysMenu();
 }, 300000);
