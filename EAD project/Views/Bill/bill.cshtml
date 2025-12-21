@@ -394,43 +394,79 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <!-- Custom JS -->
-     <script>
-    // 1. Clean the Users (Select only what JS needs, change casing to lowercase)
-        let user = @Html.Raw(Json.Serialize(Model.user.Select(u => new
-                {
-                    userId = u.UserId,
-                    name = u.Name,
-                    username = u.Username,
-                    department = u.Department,
-                    cnic = u.Cnic,
-                    isActive = u.IsActive
-                })));
+@*      <script> *@
+@*     // 1. Clean the Users (Select only what JS needs, change casing to lowercase) *@
+@*         let user = @Html.Raw(Json.Serialize(Model.user.Select(u => new *@
+@*                 { *@
+@*                     userId = u.UserId, *@
+@*                     name = u.Name, *@
+@*                     username = u.Username, *@
+@*                     department = u.Department, *@
+@*                     cnic = u.Cnic, *@
+@*                     isActive = u.IsActive *@
+@*                 }))); *@
 
-        // 2. Clean the Bills
-        let bills = @Html.Raw(Json.Serialize(Model.bills.Select(b => new
-                {
-                    billId = b.BillId,
-                    userId = b.UserId,
-                    month = b.Month,
-                    year = b.Year,
-                    grandTotal = b.GrandTotal,
-                    isPaid = b.IsPaid
-                })));
+@*         // 2. Clean the Bills *@
+@*         let bills = @Html.Raw(Json.Serialize(Model.bills.Select(b => new *@
+@*                 { *@
+@*                     billId = b.BillId, *@
+@*                     userId = b.UserId, *@
+@*                     month = b.Month, *@
+@*                     year = b.Year, *@
+@*                     grandTotal = b.GrandTotal, *@
+@*                     isPaid = b.IsPaid *@
+@*                 }))); *@
 
-        // 3. Clean the Attendance
-        let attendances = @Html.Raw(Json.Serialize(Model.attendances.Select(a => new
-                {
-                    userId = a.UserId,
-                    attendanceDate = a.AttendanceDate,
-                    mealType = a.MealType,
-                    teaWater = a.TeaWater,
-                    food = a.Food,
-                    foodPrice = a.FoodPrice
-                })));
+@*         // 3. Clean the Attendance *@
+@*         let attendances = @Html.Raw(Json.Serialize(Model.attendances.Select(a => new *@
+@*                 { *@
+@*                     userId = a.UserId, *@
+@*                     attendanceDate = a.AttendanceDate, *@
+@*                     mealType = a.MealType, *@
+@*                     teaWater = a.TeaWater, *@
+@*                     food = a.Food, *@
+@*                     foodPrice = a.FoodPrice *@
+@*                 }))); *@
+@* </script> *@
+
+@* <!-- Link your JS file AFTER the variables above --> *@
+<script>
+    // Store data in a global object to ensure bill.js can access it
+    window.messData = {
+        users: @Html.Raw(Json.Serialize(Model.user.Select(u => new
+            {
+                userId = u.UserId,
+                name = u.Name,
+                username = u.Username,
+                department = u.Department,
+                cnic = u.Cnic,
+                isActive = u.IsActive
+            }))),
+
+        bills: @Html.Raw(Json.Serialize(Model.bills.Select(b => new
+            {
+                billId = b.BillId,
+                userId = b.UserId,
+                month = b.Month,
+                year = b.Year,
+                grandTotal = b.GrandTotal,
+                isPaid = b.IsPaid,
+                // FIX: Use '=' instead of ':' for C# property assignment
+                totalTeaWaterAmount = b.TotalTeaWaterAmount,
+                totalFoodAmount = b.TotalFoodAmount
+            }))),
+
+        attendances: @Html.Raw(Json.Serialize(Model.attendances.Select(a => new
+            {
+                userId = a.UserId,
+                attendanceDate = a.AttendanceDate,
+                mealType = a.MealType,
+                teaWater = a.TeaWater,
+                food = a.Food,
+                foodPrice = a.FoodPrice
+            })))
+    };
 </script>
-
-<!-- Link your JS file AFTER the variables above -->
-
     <script src="~/js/bill.js"></script>
 </body>
 </html>
