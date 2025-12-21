@@ -7,6 +7,9 @@ let attendanceData = [];
 let selectedDate = new Date();
 let selectedMealType = 'Lunch'; // Default
 
+// FIX 1: Define the fixed price constant here
+const TEA_WATER_PRICE = 50;
+
 // ========================================
 // 1. Initialize System
 // ========================================
@@ -88,7 +91,6 @@ function updateMealDisplay() {
 // 3. Event Listeners
 // ========================================
 function setupEventListeners() {
-    // Date Navigation
     document.getElementById('prevDateBtn').addEventListener('click', () => {
         selectedDate.setDate(selectedDate.getDate() - 1);
         document.getElementById('attendanceDate').value = formatDateForInput(selectedDate);
@@ -112,12 +114,11 @@ function setupEventListeners() {
         updateDateDisplay();
     });
 
-    // Meal Type Change (Reloads data for specific meal)
     document.querySelectorAll('input[name="mealType"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             selectedMealType = e.target.value;
             updateMealDisplay();
-            loadAttendanceForDate(); // Reload when switching Lunch <-> Dinner
+            loadAttendanceForDate();
         });
     });
 
@@ -127,7 +128,7 @@ function setupEventListeners() {
 }
 
 // ========================================
-// 4. Data Loading (UPDATED FOR MEAL TYPE)
+// 4. Data Loading 
 // ========================================
 async function loadMembers() {
     showLoading(true);
@@ -149,39 +150,34 @@ async function loadAttendanceForDate() {
         const dateStr = formatDateForInput(selectedDate);
 
         attendanceData = allMembers.map(member => {
-            const mId = member.userId || member.UserId; 
+            const mId = member.userId || member.UserId;
             const mName = member.name || member.Name;
             const mUser = member.username || member.Username;
             const mDept = member.department || member.Department;
 
-            // 1. FIND EXISTING RECORD
-            // Match: UserID + Date + MealType
             const existingRecord = attendances.find(a => {
                 const dbDate = a.attendanceDate || a.AttendanceDate;
                 const dbUserId = a.userId || a.UserId;
                 const dbMeal = a.mealType || a.MealType;
-
                 const dbDateStr = dbDate ? dbDate.substring(0, 10) : "";
-                
-                return dbUserId === mId 
-                    && dbDateStr === dateStr 
-                    && dbMeal === selectedMealType; // <--- CRITICAL CHECK
+
+                return dbUserId === mId && dbDateStr === dateStr && dbMeal === selectedMealType;
             });
 
-            // 2. Set Values
             const attId = existingRecord ? (existingRecord.attendanceID || existingRecord.AttendanceID) : 0;
-            
-            const isTeaWater = existingRecord 
-                ? (existingRecord.teaWater !== undefined ? existingRecord.teaWater : existingRecord.TeaWater) 
-                : true; 
-            
-            const isFood = existingRecord 
-                ? (existingRecord.food !== undefined ? existingRecord.food : existingRecord.Food) 
+
+            const isTeaWater = existingRecord
+                ? (existingRecord.teaWater !== undefined ? existingRecord.teaWater : existingRecord.TeaWater)
+                : true;
+
+            const isFood = existingRecord
+                ? (existingRecord.food !== undefined ? existingRecord.food : existingRecord.Food)
                 : false;
 
             // 3. Calculate Price Logic
             let finalPrice = 0;
             if (existingRecord) {
+                // If record exists, trust the price in DB unless it's 0 and they have food/tea
                 finalPrice = existingRecord.foodPrice || existingRecord.FoodPrice || 0;
             } else {
                 // New Record Defaults
@@ -199,7 +195,7 @@ async function loadAttendanceForDate() {
                 username: mUser,
                 department: mDept,
                 date: dateStr,
-                mealType: selectedMealType, // Track current meal type
+                mealType: selectedMealType,
                 teaWater: isTeaWater,
                 food: isFood,
                 foodPrice: finalPrice
@@ -294,10 +290,12 @@ function handleTeaCheckboxChange(e) {
         attendance.teaWater = isChecked;
 
         if (!isChecked) {
+            // Unchecking Tea removes Food too
             attendance.food = false;
             attendance.foodPrice = 0;
             e.target.closest('tr').querySelector('.food-checkbox').checked = false;
         } else {
+            // Checking Tea (if Food not selected) sets price to 50
             if (!attendance.food) attendance.foodPrice = calculateTeaWaterCost();
         }
         updateRowStatus(e.target.closest('tr'), attendance);
@@ -314,10 +312,12 @@ function handleFoodCheckboxChange(e) {
         attendance.food = isChecked;
 
         if (isChecked) {
+            // Food selected: Price = Meal Price
             attendance.teaWater = true;
             attendance.foodPrice = calculateMealPrice(selectedMealType);
             e.target.closest('tr').querySelector('.tea-checkbox').checked = true;
         } else {
+            // Food unselected: Fallback to Tea Price (50)
             attendance.foodPrice = attendance.teaWater ? calculateTeaWaterCost() : 0;
         }
         updateRowStatus(e.target.closest('tr'), attendance);
@@ -343,7 +343,7 @@ function updateRowStatus(row, attendance) {
 }
 
 // ========================================
-// 7. Save to Database (UPDATED FOR MEAL TYPE)
+// 7. Save to Database
 // ========================================
 async function saveAllAttendance() {
     const btn = document.getElementById('saveAllAttendanceBtn');
@@ -358,7 +358,7 @@ async function saveAllAttendance() {
             AttendanceID: a.attendanceId,
             UserId: a.userId,
             AttendanceDate: dateToSend,
-            MealType: selectedMealType, // <--- SENDING MEAL TYPE
+            MealType: selectedMealType,
             TeaWater: a.teaWater,
             Food: a.food,
             FoodPrice: a.foodPrice
@@ -374,29 +374,28 @@ async function saveAllAttendance() {
             throw new Error(await response.text());
         }
 
-        // Update local memory to reflect saved state
         attendanceRecords.forEach(savedRecord => {
-             const existingIdx = attendances.findIndex(att => 
-                (att.userId || att.UserId) === savedRecord.UserId && 
-                (att.attendanceDate || att.AttendanceDate).substring(0,10) === savedRecord.AttendanceDate &&
+            const existingIdx = attendances.findIndex(att =>
+                (att.userId || att.UserId) === savedRecord.UserId &&
+                (att.attendanceDate || att.AttendanceDate).substring(0, 10) === savedRecord.AttendanceDate &&
                 (att.mealType || att.MealType) === savedRecord.MealType
-             );
+            );
 
-             if (existingIdx > -1) {
-                 attendances[existingIdx].teaWater = savedRecord.TeaWater;
-                 attendances[existingIdx].food = savedRecord.Food;
-                 attendances[existingIdx].foodPrice = savedRecord.FoodPrice;
-             } else {
-                 attendances.push({
-                     userId: savedRecord.UserId,
-                     attendanceDate: savedRecord.AttendanceDate,
-                     mealType: savedRecord.MealType,
-                     teaWater: savedRecord.TeaWater,
-                     food: savedRecord.Food,
-                     foodPrice: savedRecord.FoodPrice,
-                     attendanceID: 0
-                 });
-             }
+            if (existingIdx > -1) {
+                attendances[existingIdx].teaWater = savedRecord.TeaWater;
+                attendances[existingIdx].food = savedRecord.Food;
+                attendances[existingIdx].foodPrice = savedRecord.FoodPrice;
+            } else {
+                attendances.push({
+                    userId: savedRecord.UserId,
+                    attendanceDate: savedRecord.AttendanceDate,
+                    mealType: savedRecord.MealType,
+                    teaWater: savedRecord.TeaWater,
+                    food: savedRecord.Food,
+                    foodPrice: savedRecord.FoodPrice,
+                    attendanceID: 0
+                });
+            }
         });
 
         showToast(`Attendance saved for ${selectedMealType} on ${dateToSend}!`, 'success');
@@ -446,19 +445,10 @@ function displayMenu(dayName) {
     renderItems(dinnerItems, dinnerList, 'dinnerTotal');
 }
 
+// FIX 2: Updated function to return constant 50
+// This avoids summing distinct items (like Tea + Water = 60)
 function calculateTeaWaterCost() {
-    const currentDayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
-    const getDay = (i) => i.dayOfWeek || i.DayOfWeek;
-    const getDish = (i) => i.dishName || i.DishName;
-    const getPrice = (i) => i.price || i.Price;
-
-    const teaWaterItems = todayMenu.filter(m => {
-        const dayMatch = getDay(m) === currentDayName;
-        const name = (getDish(m) || "").toLowerCase();
-        return dayMatch && (name.includes('tea') || name.includes('chai') || name.includes('water'));
-    });
-
-    return teaWaterItems.reduce((sum, item) => sum + getPrice(item), 0);
+    return TEA_WATER_PRICE; // Returns 50
 }
 
 function calculateMealPrice(mealType) {
@@ -513,12 +503,16 @@ function updateStatistics() {
 }
 
 function showLoading(show) {
-    document.getElementById('loadingState').style.display = show ? 'block' : 'none';
-    if(show) document.getElementById('attendanceTableBody').innerHTML = '';
+    const loadingState = document.getElementById('loadingState');
+    if (loadingState) loadingState.style.display = show ? 'block' : 'none';
+
+    const tbody = document.getElementById('attendanceTableBody');
+    if (show && tbody) tbody.innerHTML = '';
 }
 
 function showEmptyState(show) {
-    document.getElementById('emptyState').style.display = show ? 'block' : 'none';
+    const es = document.getElementById('emptyState');
+    if (es) es.style.display = show ? 'block' : 'none';
 }
 
 function showToast(message, type = 'success') {
