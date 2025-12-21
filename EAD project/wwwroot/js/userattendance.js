@@ -436,43 +436,103 @@ function openVerifyModal(attendanceId) {
     }
 }
 
+//async function confirmVerification() {
+//    try {
+//        const btn = document.getElementById('confirmVerifyBtn');
+//        btn.disabled = true;
+//        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+
+//        // TODO: Create C# Controller Action to handle this if needed
+//        // await fetch('/Attendance/Verify', ...);
+
+//        // Simulate API delay
+//        await new Promise(resolve => setTimeout(resolve, 800));
+
+//        // Update local record visually
+//        const record = attendanceRecords.find(r => r.attendanceId === selectedAttendanceId);
+//        if (record) {
+//            record.sentToAdmin = true;
+//        }
+
+//        const modalEl = document.getElementById('verifyModal');
+//        const modal = bootstrap.Modal.getInstance(modalEl);
+//        modal.hide();
+
+//        renderAttendanceTable();
+//        showToast('Attendance verified successfully!', 'success');
+
+//        btn.disabled = false;
+//        btn.innerHTML = '<i class="bi bi-send me-2"></i>Send to Admin';
+//    } catch (error) {
+//        console.error('Error sending attendance:', error);
+//        showToast('Failed to send attendance', 'error');
+
+//        const btn = document.getElementById('confirmVerifyBtn');
+//        btn.disabled = false;
+//        btn.innerHTML = '<i class="bi bi-send me-2"></i>Send to Admin';
+//    }
+//}
 async function confirmVerification() {
+    const btn = document.getElementById('confirmVerifyBtn');
+
+    // Safety check
+    if (!selectedAttendanceId || !currentUser || !currentUser.userId) {
+        showToast('Error: Missing user or attendance information.', 'error');
+        return;
+    }
+
     try {
-        const btn = document.getElementById('confirmVerifyBtn');
+        // 1. UI Loading State
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
 
-        // TODO: Create C# Controller Action to handle this if needed
-        // await fetch('/Attendance/Verify', ...);
+        // 2. Prepare Data Payload
+        const payload = {
+            AttendanceId: parseInt(selectedAttendanceId),
+            UserId: parseInt(currentUser.userId)
+        };
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // 3. Send POST Request to API
+        // Make sure the URL matches your Controller Name and Action Name
+        const response = await fetch('/Userattendance/verify_request_api', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
 
-        // Update local record visually
+        // 4. Handle Errors
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || "Failed to send request");
+        }
+
+        // 5. Success Logic
+        // Update local data structure to reflect the change without reloading page
         const record = attendanceRecords.find(r => r.attendanceId === selectedAttendanceId);
         if (record) {
             record.sentToAdmin = true;
         }
 
+        // Close Modal
         const modalEl = document.getElementById('verifyModal');
         const modal = bootstrap.Modal.getInstance(modalEl);
         modal.hide();
 
+        // Re-render table to show the "Sent" button state
         renderAttendanceTable();
         showToast('Attendance verified successfully!', 'success');
 
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-send me-2"></i>Send to Admin';
     } catch (error) {
         console.error('Error sending attendance:', error);
-        showToast('Failed to send attendance', 'error');
-
-        const btn = document.getElementById('confirmVerifyBtn');
+        showToast(error.message, 'error');
+    } finally {
+        // Reset Button State
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-send me-2"></i>Send to Admin';
     }
 }
-
 // ========================================
 // UI Helper Functions
 // ========================================

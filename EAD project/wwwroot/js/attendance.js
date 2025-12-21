@@ -1,18 +1,8 @@
-﻿// ========================================
-// Attendance Management System - Main JS
-// ========================================
-
-// Global Variables
-let attendanceData = [];
+﻿let attendanceData = [];
 let selectedDate = new Date();
 let selectedMealType = 'Lunch'; // Default
-
-// FIX 1: Define the fixed price constant here
 const TEA_WATER_PRICE = 50;
 
-// ========================================
-// 1. Initialize System
-// ========================================
 document.addEventListener('DOMContentLoaded', function () {
     if (typeof allMembers === 'undefined') allMembers = [];
     if (typeof todayMenu === 'undefined') todayMenu = [];
@@ -41,10 +31,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
-
-// ========================================
-// 2. Date & Display Logic
-// ========================================
 function initializeDatePicker() {
     const dateInput = document.getElementById('attendanceDate');
     dateInput.value = formatDateForInput(selectedDate);
@@ -62,7 +48,6 @@ function formatDateDisplay(date) {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     return date.toLocaleDateString('en-US', options);
 }
-
 function updateDateDisplay() {
     document.getElementById('selectedDateDisplay').textContent = formatDateDisplay(selectedDate);
     const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
@@ -75,7 +60,6 @@ function updateDateDisplay() {
         loadAttendanceForDate();
     }
 }
-
 function updateMealDisplay() {
     document.getElementById('selectedMealDisplay').textContent = selectedMealType;
     document.getElementById('tableHeaderMeal').textContent = selectedMealType;
@@ -86,10 +70,6 @@ function updateMealDisplay() {
     document.getElementById('selectedMealPrice').textContent = mealPrice;
     document.getElementById('todayFoodPrice').textContent = mealPrice;
 }
-
-// ========================================
-// 3. Event Listeners
-// ========================================
 function setupEventListeners() {
     document.getElementById('prevDateBtn').addEventListener('click', () => {
         selectedDate.setDate(selectedDate.getDate() - 1);
@@ -127,9 +107,7 @@ function setupEventListeners() {
     document.getElementById('searchMember').addEventListener('input', filterAttendance);
 }
 
-// ========================================
-// 4. Data Loading 
-// ========================================
+
 async function loadMembers() {
     showLoading(true);
     try {
@@ -145,74 +123,6 @@ async function loadMembers() {
     }
 }
 
-
-//async function loadAttendanceForDate() {
-//    try {
-//        const dateStr = formatDateForInput(selectedDate);
-
-//       const activeMembers = allMembers.filter(m => m.isActive === true || m.IsActive === true);
-
-//        // Now map only the active members
-//        attendanceData = activeMembers.map(member => {
-//            const mId = member.userId || member.UserId;
-//            const mName = member.name || member.Name;
-//            const mUser = member.username || member.Username;
-//            const mDept = member.department || member.Department;
-
-//            const existingRecord = attendances.find(a => {
-//                const dbDate = a.attendanceDate || a.AttendanceDate;
-//                const dbUserId = a.userId || a.UserId;
-//                const dbMeal = a.mealType || a.MealType;
-//                const dbDateStr = dbDate ? dbDate.substring(0, 10) : "";
-
-//                return dbUserId === mId && dbDateStr === dateStr && dbMeal === selectedMealType;
-//            });
-
-//            const attId = existingRecord ? (existingRecord.attendanceID || existingRecord.AttendanceID) : 0;
-
-//            const isTeaWater = existingRecord
-//                ? (existingRecord.teaWater !== undefined ? existingRecord.teaWater : existingRecord.TeaWater)
-//                : true;
-
-//            const isFood = existingRecord
-//                ? (existingRecord.food !== undefined ? existingRecord.food : existingRecord.Food)
-//                : false;
-
-//            // 3. Calculate Price Logic
-//            let finalPrice = 0;
-//            if (existingRecord) {
-//                finalPrice = existingRecord.foodPrice || existingRecord.FoodPrice || 0;
-//            } else {
-//                if (isFood) {
-//                    finalPrice = calculateMealPrice(selectedMealType);
-//                } else if (isTeaWater) {
-//                    finalPrice = calculateTeaWaterCost();
-//                }
-//            }
-
-//            return {
-//                attendanceId: attId,
-//                userId: mId,
-//                name: mName,
-//                username: mUser,
-//                department: mDept,
-//                date: dateStr,
-//                mealType: selectedMealType,
-//                teaWater: isTeaWater,
-//                food: isFood,
-//                foodPrice: finalPrice
-//            };
-//        });
-
-//        renderAttendanceTable();
-//        updateStatistics();
-//        showLoading(false);
-//    } catch (error) {
-//        console.error('Error loading attendance:', error);
-//        showToast('Failed to load attendance', 'error');
-//        showLoading(false);
-//    }
-//}
 async function loadAttendanceForDate() {
     try {
         const dateStr = formatDateForInput(selectedDate);
@@ -282,9 +192,7 @@ async function loadAttendanceForDate() {
         showLoading(false);
     }
 }
-//========================================
-// 5. Render Table
-// ========================================
+
 function renderAttendanceTable() {
     const tbody = document.getElementById('attendanceTableBody');
     tbody.innerHTML = '';
@@ -347,31 +255,6 @@ function renderAttendanceTable() {
     document.querySelectorAll('.tea-checkbox').forEach(cb => cb.addEventListener('change', handleTeaCheckboxChange));
     document.querySelectorAll('.food-checkbox').forEach(cb => cb.addEventListener('change', handleFoodCheckboxChange));
 }
-
-// ========================================
-// 6. Checkbox Logic
-// ========================================
-//function handleTeaCheckboxChange(e) {
-//    const userId = parseInt(e.target.dataset.userId);
-//    const isChecked = e.target.checked;
-//    const attendance = attendanceData.find(a => a.userId === userId);
-
-//    if (attendance) {
-//        attendance.teaWater = isChecked;
-
-//        if (!isChecked) {
-//            // Unchecking Tea removes Food too
-//            attendance.food = false;
-//            attendance.foodPrice = 0;
-//            e.target.closest('tr').querySelector('.food-checkbox').checked = false;
-//        } else {
-//            // Checking Tea (if Food not selected) sets price to 50
-//            if (!attendance.food) attendance.foodPrice = calculateTeaWaterCost();
-//        }
-//        updateRowStatus(e.target.closest('tr'), attendance);
-//        updateStatistics();
-//    }
-//}
 function handleTeaCheckboxChange(e) {
     const userId = parseInt(e.target.dataset.userId);
     const isChecked = e.target.checked;
@@ -395,27 +278,7 @@ function handleTeaCheckboxChange(e) {
         updateStatistics();
     }
 }
-//function handleFoodCheckboxChange(e) {
-//    const userId = parseInt(e.target.dataset.userId);
-//    const isChecked = e.target.checked;
-//    const attendance = attendanceData.find(a => a.userId === userId);
 
-//    if (attendance) {
-//        attendance.food = isChecked;
-
-//        if (isChecked) {
-//            // Food selected: Price = Meal Price
-//            attendance.teaWater = true;
-//            attendance.foodPrice = calculateMealPrice(selectedMealType);
-//            e.target.closest('tr').querySelector('.tea-checkbox').checked = true;
-//        } else {
-//            // Food unselected: Fallback to Tea Price (50)
-//            attendance.foodPrice = attendance.teaWater ? calculateTeaWaterCost() : 0;
-//        }
-//        updateRowStatus(e.target.closest('tr'), attendance);
-//        updateStatistics();
-//    }
-//}
 function handleFoodCheckboxChange(e) {
     const userId = parseInt(e.target.dataset.userId);
     const isChecked = e.target.checked;
@@ -459,9 +322,7 @@ function updateRowStatus(row, attendance) {
     statusBadge.textContent = statusText;
 }
 
-// ========================================
-// 7. Save to Database
-// ========================================
+
 async function saveAllAttendance() {
     const btn = document.getElementById('saveAllAttendanceBtn');
 
@@ -526,9 +387,6 @@ async function saveAllAttendance() {
     }
 }
 
-// ========================================
-// 8. Menu & Price Logic
-// ========================================
 function displayMenu(dayName) {
     const getDay = (i) => i.dayOfWeek || i.DayOfWeek;
     const getMeal = (i) => i.mealType || i.MealType;
@@ -561,13 +419,9 @@ function displayMenu(dayName) {
     renderItems(lunchItems, lunchList, 'lunchTotal');
     renderItems(dinnerItems, dinnerList, 'dinnerTotal');
 }
-
-// FIX 2: Updated function to return constant 50
-// This avoids summing distinct items (like Tea + Water = 60)
 function calculateTeaWaterCost() {
     return TEA_WATER_PRICE; // Returns 50
 }
-
 function calculateMealPrice(mealType) {
     const currentDayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
     const getDay = (i) => i.dayOfWeek || i.DayOfWeek;
@@ -578,9 +432,6 @@ function calculateMealPrice(mealType) {
     return mealItems.reduce((sum, item) => sum + getPrice(item), 0);
 }
 
-// ========================================
-// 9. UI Helpers
-// ========================================
 function markAllPresent() {
     const mealPrice = calculateMealPrice(selectedMealType);
     attendanceData.forEach(attendance => {
