@@ -6,7 +6,6 @@ namespace EAD_project;
 public partial class TblAttendance
 {
     public int AttendanceId { get; set; }
-
     public int UserId { get; set; }
 
     public DateOnly AttendanceDate { get; set; }
