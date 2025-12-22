@@ -20,17 +20,31 @@ namespace EAD_project.Controllers
     {
         public async Task<IActionResult> user_bill()
         {
+            // 1. Get User ID from Session
+            int? sessionUserId = HttpContext.Session.GetInt32("uet");
+            if (sessionUserId == null)
+            {
+                return RedirectToAction("login", "Login");
+            }
+            int currentUserId = sessionUserId.Value;
+
             using (MessManagmentContext mydb = new MessManagmentContext())
             {
-                // 2. Instantiate 'ViewModelBill', NOT 'ViewModel'
                 var viewModel = new ViewModelBill
                 {
-                    // 3. Use PascalCase property names (User, Bills, Attendances)
-                    User = await mydb.TblUsers.ToListAsync(),
+                    // 2. Fetch only the logged-in User
+                    User = await mydb.TblUsers
+                                     .Where(u => u.UserId == currentUserId)
+                                     .ToListAsync(),
 
-                    Bills = await mydb.TblBills.ToListAsync(),
+                    // 3. Fetch only bills belonging to this user
+                    Bills = await mydb.TblBills
+                                     .Where(b => b.UserId == currentUserId)
+                                     .ToListAsync(),
 
+                    // 4. Fetch only attendance records for this user
                     Attendances = await mydb.TblAttendances
+                        .Where(a => a.UserId == currentUserId) // Filter applied here
                         .Select(a => new TblAttendance
                         {
                             AttendanceId = a.AttendanceId,
@@ -44,7 +58,6 @@ namespace EAD_project.Controllers
                         .ToListAsync()
                 };
 
-                // Now the type matches what the View expects
                 return View(viewModel);
             }
         }
