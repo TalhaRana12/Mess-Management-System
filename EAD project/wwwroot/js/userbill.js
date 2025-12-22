@@ -1,22 +1,23 @@
 ﻿// My Bills Page JavaScript - Connected to C# Backend
 const getEl = id => document.getElementById(id);
 const setTxt = (id, txt) => { const el = getEl(id); if (el) el.textContent = txt; };
-const getVal = id => getEl(id).value.trim();
+const getVal = id => getEl(id) ? getEl(id).value.trim() : '';
 const fmtMoney = n => `Rs. ${n.toLocaleString()}`;
 const fmtDate = d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 const getMonthName = (m) => new Date(0, m - 1).toLocaleString('default', { month: 'long' });
 
-// 1. Initialize State & Process Data from window.messData
-let currentUser = { name: "Guest", id: "N/A" };
+// 1. Initialize State & Process Data
+let currentUser = { name: "Guest", id: 0, dept: "" };
 let billsData = [];
 let state = { payBill: null, detailBill: null };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Process Backend Data
+    // Check if C# injected the data
     if (window.messData) {
         processBackendData();
     } else {
         console.error("window.messData is missing. Ensure Razor View is rendering correctly.");
+        showToast("Error loading data from server.", "error");
     }
 
     // Initialize UI
@@ -25,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBillHistory();
     calculatePaymentSummary();
 
-    // Sidebar Toggle
+    // Sidebar Toggle Logic
     const toggle = getEl('sidebarToggle'), sidebar = document.querySelector('.sidebar'), overlay = getEl('sidebarOverlay');
     if (toggle) toggle.onclick = () => { sidebar.classList.add('show'); overlay.classList.add('show'); };
     if (overlay) overlay.onclick = () => { sidebar.classList.remove('show'); overlay.classList.remove('show'); };
@@ -33,10 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 2. Transform C# Data to UI Format
 const processBackendData = () => {
-    // Set User (Assuming first user in list is the logged-in user)
+    // Set User
     if (window.messData.users && window.messData.users.length > 0) {
         const u = window.messData.users[0];
-        currentUser = { name: u.name, id: u.username || u.userId, dept: u.department };
+        // IMPORTANT: Ensure ID is integer for API calls
+        currentUser = { name: u.name, id: u.userId, dept: u.department };
     }
 
     // Transform Bills
@@ -47,28 +49,26 @@ const processBackendData = () => {
             const uniqueDays = new Set(billAttendances.map(a => a.dateStr)).size;
             const totalMeals = billAttendances.filter(a => a.food).length;
 
-            // Calculate Mess Fee (Difference between GrandTotal and items)
-            // If GrandTotal is exactly food + tea, messFee is 0
+            // Calculate Mess Fee logic
             const calculatedTotal = b.totalFoodAmount + b.totalTeaWaterAmount;
-            const messFee = b.grandTotal - calculatedTotal;
+            let messFee = b.grandTotal - calculatedTotal;
+            if (messFee < 0) messFee = 0; // Prevent negative if data mismatch
 
             return {
                 id: b.billId,
                 month: `${getMonthName(b.month)} ${b.year}`,
-                monthInt: b.month, // For filtering
+                monthInt: b.month,
                 year: b.year,
                 amount: b.grandTotal,
                 status: b.isPaid ? 'paid' : 'unpaid',
-                // C# doesn't give GeneratedDate, assuming 1st of month
-                generatedDate: `${b.year}-${String(b.month).padStart(2, '0')}-01`,
-                // Paid date isn't in TblBill, defaulting to today if paid (or handle via TblPayment if available)
+                generatedDate: `${b.year}-${String(b.month).padStart(2, '0')}-01`, // Approx date
                 paidDate: b.isPaid ? new Date().toISOString() : null,
                 daysPresent: uniqueDays,
                 meals: totalMeals,
                 breakdown: {
                     mealsTotal: b.totalFoodAmount,
                     teaWater: b.totalTeaWaterAmount,
-                    messFee: messFee > 0 ? messFee : 0
+                    messFee: messFee
                 }
             };
         });
@@ -88,13 +88,12 @@ const getAttendanceForPeriod = (month, year) => {
     }).map(a => ({
         ...a,
         dateObj: new Date(a.attendanceDate),
-        dateStr: a.attendanceDate // Keep string for Set uniqueness
+        dateStr: a.attendanceDate
     }));
 };
 
 // 3. UI Logic Functions
 const loadCurrentBill = () => {
-    // Current bill is the first one in the sorted list (newest)
     const cur = billsData.length > 0 ? billsData[0] : null;
 
     if (cur) {
@@ -103,7 +102,6 @@ const loadCurrentBill = () => {
         setTxt('daysPresent', cur.daysPresent);
         setTxt('mealsCount', cur.meals);
 
-        // Update banner button based on status
         const bannerBtn = document.querySelector('.current-bill-banner .btn-view-detail');
         if (bannerBtn) bannerBtn.setAttribute('onclick', `viewBillDetail(${cur.id})`);
     } else {
@@ -127,7 +125,6 @@ const loadBillHistory = () => {
 
     grid.innerHTML = filtered.map(b => {
         const isPaid = b.status === 'paid';
-        // Note: Using generatedDate for 'Paid' display because TblBill doesn't have PaidDate
         const dateStr = isPaid ? `Status: Paid` : `Generated: ${fmtDate(b.generatedDate)}`;
 
         const btn = isPaid
@@ -160,17 +157,10 @@ const viewBillDetail = (id) => {
     if (!bill) return;
     state.detailBill = bill;
 
-    // Get Actual Attendance Records
     const attList = getAttendanceForPeriod(bill.monthInt, bill.year);
-    // Sort by date
     attList.sort((a, b) => a.dateObj - b.dateObj);
 
-    const rows = attList.length ? attList.map(a => {
-        const amount = (a.foodPrice || 0) + (a.teaWater ? 0 : 0); // Logic depends on if Tea is free or separate. Assuming included in foodPrice for row display or 0.
-        // Adjusting row display logic to match C# model
-        const displayAmt = (a.food ? (a.foodPrice || 0) : 0) + (a.teaWater ? 0 : 0); // Modify 0 if tea has specific cost per row
-
-        return `
+    const rows = attList.length ? attList.map(a => `
         <tr>
             <td><strong>${a.dateObj.getDate()}/${a.dateObj.getMonth() + 1}</strong><br><small class="text-muted">${a.dateObj.toLocaleDateString('en-US', { weekday: 'short' })}</small></td>
             <td><span class="badge ${a.mealType === 'Lunch' ? 'bg-warning' : 'bg-primary'}">${a.mealType}</span></td>
@@ -178,7 +168,7 @@ const viewBillDetail = (id) => {
             <td class="text-center">${a.food ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-x-circle-fill text-danger"></i>'}</td>
             <td><strong>${a.foodPrice ? fmtMoney(a.foodPrice) : '-'}</strong></td>
         </tr>`
-    }).join('') : '<tr><td colspan="5" class="text-center">No attendance records found for this period</td></tr>';
+    ).join('') : '<tr><td colspan="5" class="text-center">No attendance records found for this period</td></tr>';
 
     getEl('billDetailContent').innerHTML = `
         <div class="bill-header">
@@ -188,7 +178,7 @@ const viewBillDetail = (id) => {
                 <span class="badge ${bill.status === 'paid' ? 'bg-success' : 'bg-danger'}">${bill.status.toUpperCase()}</span>
             </div>
         </div>
-        <div class="bill-member-info"><h6>Bill To:</h6><p><strong>${currentUser.name}</strong> (@${currentUser.id})</p></div>
+        <div class="bill-member-info"><h6>Bill To:</h6><p><strong>${currentUser.name}</strong> (ID: ${currentUser.id})</p></div>
         <div class="bill-attendance-details">
             <h6>Attendance Breakdown</h6>
             <div class="table-wrapper-horizontal"><table class="table table-sm table-bordered table-horizontal">
@@ -207,7 +197,7 @@ const viewBillDetail = (id) => {
     new bootstrap.Modal(getEl('billDetailModal')).show();
 };
 
-// Payment Logic (Kept mostly same, just updating bill status logic)
+// 4. Payment Logic
 const openPaymentModal = (id) => {
     const bill = billsData.find(b => b.id === id);
     if (!bill) return;
@@ -215,6 +205,7 @@ const openPaymentModal = (id) => {
     setTxt('paymentMonth', bill.month);
     setTxt('paymentAmount', fmtMoney(bill.amount));
 
+    // Reset inputs
     ['cardNumber', 'cardName', 'expiryDate', 'cvv', 'accountNumber', 'phoneNumber', 'mobilePin'].forEach(i => { if (getEl(i)) getEl(i).value = ''; });
     getEl('bankTransfer').checked = true;
     showPaymentForm('bank');
@@ -229,38 +220,82 @@ const showPaymentForm = (method) => {
     if (method === 'cash') getEl('cashPaymentForm').style.display = 'block';
 };
 
-const processPayment = () => {
+const processPayment = async () => {
     if (!state.payBill) return;
-    const method = document.querySelector('input[name="paymentMethod"]:checked').value;
-    let valid = false, details = '';
 
-    const checks = {
-        bank: () => {
-            const acc = getVal('accountNumber'), name = getVal('accountName');
-            if (acc.length >= 10 && name) { valid = true; details = `Bank: ${name} (${acc})`; }
-            else showToast('Invalid bank details', 'error');
-        },
-        card: () => {
-            const num = getVal('cardNumber').replace(/\s/g, ''), name = getVal('cardName'), exp = getVal('expiryDate'), cvv = getVal('cvv');
-            if (num.length === 16 && cvv.length === 3 && /^\d{2}\/\d{2}$/.test(exp) && name) { valid = true; details = `Card ending ${num.slice(-4)}`; }
-            else showToast('Invalid card details', 'error');
-        },
-        mobile: () => {
-            const ph = getVal('phoneNumber'), pin = getVal('mobilePin');
-            if (ph.length === 11 && pin.length === 4) { valid = true; details = `Mobile: ${ph}`; }
-            else showToast('Invalid mobile details', 'error');
-        },
-        cash: () => { valid = true; details = 'Cash Payment'; }
+    const method = document.querySelector('input[name="paymentMethod"]:checked').value;
+    let valid = false;
+    let details = '';
+    let transactionIdInput = '';
+
+    // Strict Validation Regex
+    const patterns = {
+        card: /^\d{16}$/,           // 16 digits
+        cvv: /^\d{3}$/,             // 3 digits
+        expiry: /^(0[1-9]|1[0-2])\/\d{2}$/, // MM/YY
+        mobile: /^03\d{9}$/,        // 11 digits starting with 03 (PK format)
+        mobilePin: /^\d{4}$/,       // 4 digits
+        account: /^\d{10,24}$/      // 10 to 24 digits
     };
 
-    checks[method]();
+    if (method === 'bank') {
+        const acc = getVal('accountNumber').replace(/\s/g, '');
+        const name = getVal('accountName');
+
+        if (!patterns.account.test(acc)) {
+            showToast('Account number must be 10-24 digits', 'error');
+            return;
+        }
+        if (name.length < 3) {
+            showToast('Enter a valid Account Title', 'error');
+            return;
+        }
+        valid = true;
+        details = `Bank Transfer: ${name}`;
+        transactionIdInput = `ACC-${acc}`;
+    }
+    else if (method === 'card') {
+        const num = getVal('cardNumber').replace(/\s/g, '');
+        const name = getVal('cardName');
+        const exp = getVal('expiryDate');
+        const cvv = getVal('cvv');
+
+        if (!patterns.card.test(num)) return showToast('Card must be 16 digits', 'error');
+        if (!patterns.expiry.test(exp)) return showToast('Expiry must be MM/YY', 'error');
+        if (!patterns.cvv.test(cvv)) return showToast('CVV must be 3 digits', 'error');
+        if (name.length < 3) return showToast('Enter Card Name', 'error');
+
+        valid = true;
+        details = `Card ending ****${num.slice(-4)}`;
+        transactionIdInput = `CARD-${num.slice(-4)}`;
+    }
+    else if (method === 'mobile') {
+        const ph = getVal('phoneNumber').replace(/\s/g, '');
+        const pin = getVal('mobilePin');
+
+        if (!patterns.mobile.test(ph)) return showToast('Invalid Phone (Format: 03001234567)', 'error');
+        if (!patterns.mobilePin.test(pin)) return showToast('PIN must be 4 digits', 'error');
+
+        valid = true;
+        details = `Mobile: ${ph}`;
+        transactionIdInput = `MOB-${ph}`;
+    }
+    else if (method === 'cash') {
+        valid = true;
+        details = 'Cash Payment';
+        transactionIdInput = 'CASH-HAND';
+    }
+
     if (valid) {
         bootstrap.Modal.getInstance(getEl('paymentModal')).hide();
-        showConfirmation(details);
+        showConfirmation(details, method, transactionIdInput);
     }
 };
 
-const showConfirmation = (details) => {
+const showConfirmation = (details, method, transactionId) => {
+    // Prevent Multiple Overlays
+    if (getEl('confOverlay')) getEl('confOverlay').remove();
+
     const div = document.createElement('div');
     div.id = 'confOverlay'; div.className = 'confirmation-overlay';
     div.innerHTML = `
@@ -270,29 +305,71 @@ const showConfirmation = (details) => {
             <p class="text-center mb-4 text-muted">${details}</p>
             <div class="confirmation-actions">
                 <button class="btn btn-cancel" onclick="this.closest('#confOverlay').remove()"><i class="bi bi-x-circle me-2"></i>Cancel</button>
-                <button class="btn btn-confirm" onclick="finalizePayment('${details}')"><i class="bi bi-check-circle me-2"></i>Proceed</button>
+                <button class="btn btn-confirm" id="confirmPayBtn"><i class="bi bi-check-circle me-2"></i>Proceed</button>
             </div>
         </div>`;
     document.body.appendChild(div);
     setTimeout(() => div.classList.add('show'), 10);
+
+    // Attach Async Listener
+    getEl('confirmPayBtn').onclick = () => finalizePaymentApi(details, method, transactionId);
 };
 
-const finalizePayment = (details) => {
+// Call C# API
+const finalizePaymentApi = async (details, method, transactionId) => {
     const ol = getEl('confOverlay'); if (ol) ol.remove();
     showToast('Processing payment...', 'info');
 
-    // AJAX Call would go here to update TblPayment in C#
-    setTimeout(() => {
-        state.payBill.status = 'paid';
-        state.payBill.paidDate = new Date().toISOString().split('T')[0];
-        if (state.payBill.id === billsData[0].id) loadCurrentBill();
-        loadBillHistory();
-        showToast(`Payment successful!`, 'success');
+    const payload = {
+        BillId: state.payBill.id,
+        UserId: currentUser.id,
+        AmountPaid: state.payBill.amount,
+        PaymentMethod: method,
+        TransactionId: transactionId
+    };
+
+    try {
+        const response = await fetch('/Bill_user/PayBillApi', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            state.payBill.status = 'paid';
+            state.payBill.paidDate = new Date().toISOString();
+
+            // Update local data array
+            const billIndex = billsData.findIndex(b => b.id === state.payBill.id);
+            if (billIndex > -1) {
+                billsData[billIndex].status = 'paid';
+                billsData[billIndex].paidDate = state.payBill.paidDate;
+            }
+
+            // Refresh UI
+            loadCurrentBill();
+            loadBillHistory();
+            calculatePaymentSummary();
+            showToast('Payment Successful!', 'success');
+        } else {
+            showToast('Payment Failed: ' + result.message, 'error');
+        }
+
+    } catch (err) {
+        console.error(err);
+        showToast('Server Error: ' + err.message, 'error');
+    } finally {
         state.payBill = null;
-    }, 2000);
+    }
 };
 
-// PDF Logic
+// 5. PDF Logic
 const downloadBill = (id) => {
     const bill = id ? billsData.find(b => b.id === id) : state.detailBill;
     if (!bill) return;
@@ -301,8 +378,6 @@ const downloadBill = (id) => {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-
-        // Use real attendance data for PDF
         const attData = getAttendanceForPeriod(bill.monthInt, bill.year).sort((a, b) => a.dateObj - b.dateObj);
 
         // Header
@@ -329,7 +404,7 @@ const downloadBill = (id) => {
 
         // Summary
         let y = doc.lastAutoTable.finalY + 10;
-        if (y > 270) { doc.addPage(); y = 20; } // Check page overflow
+        if (y > 270) { doc.addPage(); y = 20; }
 
         doc.text('Summary', 15, y);
         doc.line(15, y + 2, 195, y + 2);
@@ -355,8 +430,6 @@ const downloadBill = (id) => {
 const calculatePaymentSummary = () => {
     const yrVal = getVal('yearFilter');
     const yr = yrVal === 'all' ? new Date().getFullYear() : parseInt(yrVal);
-
-    // Filter billsData, not window.messData directly
     const b = billsData.filter(x => x.year === yr);
 
     const totals = b.reduce((acc, x) => {
