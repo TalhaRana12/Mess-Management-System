@@ -1,7 +1,8 @@
 ﻿@{
     Layout = null;
 }
-
+@using EAD_project.Controllers
+@model DisputeViewModel
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -319,6 +320,36 @@
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
+
+<script>
+    // Inject Data from C# Model to JavaScript
+    window.disputeBackendData = {
+        requests: @Html.Raw(Json.Serialize(Model.Requests.Select(r => new
+            {
+                requestId = r.RequestId,
+                attendanceId = r.AttendanceId,
+                userId = r.UserId,
+                requestDate = r.RequestDate,
+                status = r.Status,
+                adminMessage = r.AdminMessage,
+                // User Details
+                userName = r.User.Name,
+                userLogin = r.User.Username,
+                userDept = r.User.Department
+            }))),
+
+        attendances: @Html.Raw(Json.Serialize(Model.Attendances.Select(a => new
+            {
+                attendanceId = a.AttendanceId,
+                date = a.AttendanceDate,
+                teaWater = a.TeaWater,
+                food = a.Food,
+                foodPrice = a.FoodPrice,
+                mealType = a.MealType
+            })))
+    };
+</script>
+<script src="~/js/admin-disputes.js"></script>
     <script src="~/js/dispute.js"></script>
 </body>
 </html>
