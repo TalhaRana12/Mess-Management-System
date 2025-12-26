@@ -27,10 +27,10 @@
                 <h3><i class="bi bi-egg-fried me-2"></i>MessHub</h3>
             </div>
             <nav class="sidebar-nav">
-                <a href="user-dashboard.html" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> My Dashboard</a>
-                <a href="user-attendance.html" class="nav-link"><i class="bi bi-calendar-check-fill"></i> My Attendance</a>
-                <a href="menu.html" class="nav-link"><i class="bi bi-journal-text"></i> Menu</a>
-                <a href="user-bills.html" class="nav-link active"><i class="bi bi-receipt"></i> My Bills</a>
+                <a href="@Url.Action("user_dashboard","Userdashboard")" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> My Dashboard</a>
+                <a href="@Url.Action("user_attendance","Userattendance")" class="nav-link"><i class="bi bi-calendar-check-fill"></i> My Attendance</a>
+                <a href="@Url.Action("user_menu","Usermenu")" class="nav-link"><i class="bi bi-journal-text"></i> Menu</a>
+                <a href="@Url.Action("user_bill","Bill_user")" class="nav-link active"><i class="bi bi-receipt"></i> My Bills</a>
                 <a href="#" class="nav-link"><i class="bi bi-exclamation-triangle-fill"></i> My Disputes</a>
                 <a href="#" class="nav-link"><i class="bi bi-person-circle"></i> Profile</a>
             </nav>

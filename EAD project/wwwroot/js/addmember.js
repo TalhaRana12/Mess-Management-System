@@ -339,9 +339,9 @@ function showSuccessPopup() {
             <button class="btn-add-another" style="background: linear-gradient(45deg, #198754, #20c997); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
                 <i class="bi bi-plus-circle me-2"></i>Add Another
             </button>
-            <button class="btn-go-dashboard" style="background: #f8f9fa; color: #212529; border: 2px solid #e0e0e0; padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
-                <i class="bi bi-grid me-2"></i>Dashboard
-            </button>
+            //<button class="btn-go-dashboard" style="background: #f8f9fa; color: #212529; border: 2px solid #e0e0e0; padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+            //    <i class="bi bi-grid me-2"></i>Dashboard
+            //</button>
         </div>
     `;
 

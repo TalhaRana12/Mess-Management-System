@@ -31,12 +31,12 @@
                 <h3><i class="bi bi-egg-fried me-2"></i>MessHub</h3>
             </div>
             <nav class="sidebar-nav">
-                <a href="dashborad.html" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
-                <a href="members.html" class="nav-link"><i class="bi bi-people-fill"></i> Members</a>
-                <a href="attendance.html" class="nav-link"><i class="bi bi-calendar-check-fill"></i> Attendance</a>
-                <a href="menu.html" class="nav-link"><i class="bi bi-journal-text"></i> Menu</a>
-                <a href="bills.html" class="nav-link active"><i class="bi bi-receipt"></i> Bills</a>
-                <a href="#" class="nav-link"><i class="bi bi-exclamation-triangle-fill"></i> Disputes</a>
+                <a href="@Url.Action("Admindashboard","Admin")" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+                <a href="@Url.Action("members","Members")" class="nav-link"><i class="bi bi-people-fill"></i> Members</a>
+                <a href="@Url.Action("attendance","Attendance")" class="nav-link"><i class="bi bi-calendar-check-fill"></i> Attendance</a>
+                <a href="@Url.Action("menu","Menu")" class="nav-link"><i class="bi bi-journal-text"></i> Menu</a>
+                <a href="@Url.Action("bill","Bill")" class="nav-link active"><i class="bi bi-receipt"></i> Bills</a>
+                <a href="@Url.Action("dispute","Dispute")" class="nav-link"><i class="bi bi-exclamation-triangle-fill"></i> Disputes</a>
             </nav>
             <div class="sidebar-footer">
                 <a href="login.html" class="nav-link"><i class="bi bi-box-arrow-left"></i> Logout</a>

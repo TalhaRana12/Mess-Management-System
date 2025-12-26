@@ -12,14 +12,19 @@ namespace EAD_project.Controllers
     }
     public class UserdashboardController : Controller
     {
-        public async Task<IActionResult> user_dashboard(int id)
+        public async Task<IActionResult> user_dashboard()
         {
-            if (id == 0) return RedirectToAction("login", "Login");
+            int? sessionUserId = HttpContext.Session.GetInt32("uet");
+            if (sessionUserId == null)
+            {
+                return RedirectToAction("login", "Login");
+            }
+            int currentUserId = sessionUserId.Value;
 
             using (var db = new MessManagmentContext())
             {
                 // 1. Fetch User Profile
-                var userProfile = await db.TblUsers.FirstOrDefaultAsync(u => u.UserId == id);
+                var userProfile = await db.TblUsers.FirstOrDefaultAsync(u => u.UserId == currentUserId);
 
                 if (userProfile == null) return RedirectToAction("login", "Login");
 
@@ -30,13 +35,13 @@ namespace EAD_project.Controllers
 
                     // Fetch ONLY this user's attendance
                     attendance = await db.TblAttendances
-                                    .Where(a => a.UserId == id)
+                                    .Where(a => a.UserId == currentUserId)
                                     .OrderByDescending(a => a.AttendanceDate)
                                     .ToListAsync(),
 
                     // Fetch ONLY this user's bills (Paid and Unpaid)
                     bill = await db.TblBills
-                                .Where(b => b.UserId == id)
+                                .Where(b => b.UserId == currentUserId)
                                 .OrderByDescending(b => b.Year).ThenByDescending(b => b.Month)
                                 .ToListAsync(),
 
