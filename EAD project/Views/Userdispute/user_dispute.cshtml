@@ -1,3 +1,202 @@
 ﻿@{
 	Layout = null;
 }
+@using EAD_project.Controllers
+@model UserDisputeViewModel
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MessHub - My Disputes</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/userdispute.css">
+</head>
+<body>
+
+    <div class="dashboard-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3><i class="bi bi-egg-fried me-2"></i>MessHub</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="user-dashboard.html" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> My Dashboard</a>
+                <a href="user-attendance.html" class="nav-link"><i class="bi bi-calendar-check-fill"></i> My Attendance</a>
+                <a href="menu.html" class="nav-link"><i class="bi bi-journal-text"></i> Menu</a>
+                <a href="user-bills.html" class="nav-link"><i class="bi bi-receipt"></i> My Bills</a>
+                <a href="user-disputes.html" class="nav-link active"><i class="bi bi-exclamation-triangle-fill"></i> My Disputes</a>
+                <a href="#" class="nav-link"><i class="bi bi-person-circle"></i> Profile</a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="login.html" class="nav-link"><i class="bi bi-box-arrow-left"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navbar -->
+            <header class="top-navbar">
+                <button class="btn sidebar-toggle d-lg-none" id="sidebarToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h4 class="page-title">My Disputes</h4>
+                <div class="navbar-right">
+                    <span class="user-greeting">Welcome, <strong id="userName">Ahmed Ali</strong></span>
+                    <div class="user-avatar">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Disputes Content -->
+            <div class="dashboard-content">
+                <!-- Stats Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-primary-light">
+                                <i class="bi bi-send-fill text-primary"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h4 id="totalDisputes">0</h4>
+                                <p>Total Disputes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-warning-light">
+                                <i class="bi bi-hourglass-split text-warning"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h4 id="pendingDisputes">0</h4>
+                                <p>Pending</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-success-light">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h4 id="approvedDisputes">0</h4>
+                                <p>Resolved</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-danger-light">
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h4 id="rejectedDisputes">0</h4>
+                                <p>Rejected</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Alert -->
+                <div class="alert alert-info d-flex align-items-center mb-4">
+                    <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+                    <div>
+                        <strong>Note:</strong> Disputes are submitted through your attendance page. Here you can view the status of all your submitted disputes and admin responses.
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="action-bar">
+                    <div class="action-left">
+                        <h5><i class="bi bi-list-check me-2"></i>My Dispute History</h5>
+                    </div>
+                    <div class="action-right">
+                        <select class="form-select filter-select" id="statusFilter" onchange="filterDisputes()">
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Disputes List -->
+                <div class="disputes-container" id="disputesContainer">
+                    <!-- Disputes will be loaded here -->
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <i class="bi bi-inbox"></i>
+                    <h5>No Disputes Found</h5>
+                    <p>You haven't submitted any disputes yet. To submit a dispute, go to your attendance page and click on the date you want to dispute.</p>
+                    <a href="user-attendance.html" class="btn btn-success mt-3">
+                        <i class="bi bi-calendar-check me-2"></i>Go to Attendance
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- View Dispute Modal -->
+    <div class="modal fade" id="viewDisputeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Dispute Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewDisputeContent">
+                    <!-- Dispute details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+
+
+<!-- ... HTML Body ... -->
+
+<script>
+    // Pass Data to Frontend
+    window.userDisputeData = {
+        currentUser: {
+            name: "@Model.UserName",
+            id: "MEM-@Model.UserId"
+        },
+        requests: @Html.Raw(Json.Serialize(Model.Requests.Select(r => new
+            {
+                requestId = r.RequestId,
+                requestDate = r.RequestDate,
+                status = r.Status,
+                adminMessage = r.AdminMessage,
+
+                // Attendance Details attached to this request
+                attendanceDate = r.Attendance.AttendanceDate,
+                mealType = r.Attendance.MealType, // "Lunch" or "Dinner"
+                teaWater = r.Attendance.TeaWater,
+                food = r.Attendance.Food
+            })))
+    };
+</script>
+<script src="~/js/user-disputes.js"></script>
+    <script src="~/js/userdispute.js"></script>
+</body>
+</html>
