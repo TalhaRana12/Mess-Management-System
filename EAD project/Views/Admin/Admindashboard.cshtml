@@ -1,4 +1,7 @@
-﻿@{
+﻿@using EAD_project.Controllers
+@model DashboardViewModel
+
+@{
     Layout = null;
 }
 
@@ -7,16 +10,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mess Management - Dashboard</title>
-    <!-- Bootstrap 5 CSS -->
+    <title>Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Link to your CSS file -->
     <link rel="stylesheet" href="~/css/Admindashboard.css">
-   
 </head>
 <body>
 
@@ -27,7 +25,7 @@
                 <h3><i class="bi bi-egg-fried me-2"></i>MessHub</h3>
             </div>
             <nav class="sidebar-nav">
-                <a href="@Url.Action("AdminDashboard", "Admin")" class="nav-link active"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+                <a href="@Url.Action("Admindashboard", "Admin")" class="nav-link active"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
                 <a href="@Url.Action("members", "Members")" class="nav-link"><i class="bi bi-people-fill"></i> Members</a>
                 <a href="@Url.Action("attendance", "Attendance")" class="nav-link"><i class="bi bi-calendar-check-fill"></i> Attendance</a>
                 <a href="@Url.Action("menu", "Menu")" class="nav-link"><i class="bi bi-journal-text"></i> Menu</a>
@@ -35,142 +33,89 @@
                 <a href="@Url.Action("dispute", "Dispute")" class="nav-link"><i class="bi bi-exclamation-triangle-fill"></i> Disputes</a>
             </nav>
             <div class="sidebar-footer">
-                <a href="login.html" class="nav-link"><i class="bi bi-box-arrow-left"></i> Logout</a>
+                <a href="@Url.Action("Login", "Login")" class="nav-link"><i class="bi bi-box-arrow-left"></i> Logout</a>
             </div>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Top Navbar -->
             <header class="top-navbar">
-                <button class="btn sidebar-toggle d-md-none" id="sidebarToggle">
-                    <i class="bi bi-list"></i>
-                </button>
+                <button class="btn sidebar-toggle d-lg-none" id="sidebarToggle"><i class="bi bi-list"></i></button>
                 <h4 class="page-title">Dashboard</h4>
                 <div class="navbar-right">
                     <span class="user-greeting">Hello, <strong>Admin</strong></span>
-                    <div class="user-avatar">
-                        <i class="bi bi-person-circle"></i>
-                    </div>
+                    <div class="user-avatar"><i class="bi bi-person-circle"></i></div>
                 </div>
             </header>
 
-            <!-- Dashboard Content -->
             <div class="dashboard-content">
-                <!-- Stats Cards -->
+                <!-- Stats Row -->
                 <div class="row g-4 mb-4">
                     <div class="col-12 col-sm-6 col-xl-3">
                         <div class="stat-card">
-                            <div class="stat-icon bg-primary-light">
-                                <i class="bi bi-people-fill text-primary"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>156</h3>
-                                <p>Total Members</p>
-                            </div>
+                            <div class="stat-icon bg-primary-light"><i class="bi bi-people-fill text-primary"></i></div>
+                            <div class="stat-info"><h3 id="statTotalMembers">0</h3><p>Total Members</p></div>
                         </div>
                     </div>
                     <div class="col-12 col-sm-6 col-xl-3">
                         <div class="stat-card">
-                            <div class="stat-icon bg-success-light">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>124</h3>
-                                <p>Present Today</p>
-                            </div>
+                            <div class="stat-icon bg-success-light"><i class="bi bi-check-circle-fill text-success"></i></div>
+                            <div class="stat-info"><h3 id="statPresentToday">0</h3><p>Present Today</p></div>
                         </div>
                     </div>
                     <div class="col-12 col-sm-6 col-xl-3">
                         <div class="stat-card">
-                            <div class="stat-icon bg-warning-light">
-                                <i class="bi bi-exclamation-circle-fill text-warning"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>8</h3>
-                                <p>Pending Disputes</p>
-                            </div>
+                            <div class="stat-icon bg-warning-light"><i class="bi bi-exclamation-circle-fill text-warning"></i></div>
+                            <div class="stat-info"><h3 id="statPendingDisputes">0</h3><p>Pending Disputes</p></div>
                         </div>
                     </div>
                     <div class="col-12 col-sm-6 col-xl-3">
                         <div class="stat-card">
-                            <div class="stat-icon bg-danger-light">
-                                <i class="bi bi-cash-stack text-danger"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>Rs. 45,200</h3>
-                                <p>Pending Bills</p>
-                            </div>
+                            <div class="stat-icon bg-danger-light"><i class="bi bi-cash-stack text-danger"></i></div>
+                            <div class="stat-info"><h3 id="statPendingBills">Rs. 0</h3><p>Pending Bills</p></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Quick Actions & Recent Activity -->
+                <!-- Lower Row -->
                 <div class="row g-4">
-                    <!-- Quick Actions -->
+                    <!-- Actions -->
                     <div class="col-12 col-lg-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5><i class="bi bi-lightning-fill me-2"></i>Quick Actions</h5>
-                            </div>
+                        <div class="card h-100">
+                            <div class="card-header"><h5><i class="bi bi-lightning-fill me-2"></i>Quick Actions</h5></div>
                             <div class="card-body">
                                 <div class="d-grid gap-2">
-                                    <button class="btn btn-action"><i class="bi bi-person-plus-fill"></i> Add Member</button>
-                                    <button class="btn btn-action"><i class="bi bi-calendar-plus"></i> Mark Attendance</button>
-                                    <button class="btn btn-action"><i class="bi bi-receipt"></i> Generate Bills</button>
-                                    <button class="btn btn-action"><i class="bi bi-envelope-fill"></i> Send Notifications</button>
+                                    <a href="@Url.Action("members", "Members")" class="btn btn-action"><i class="bi bi-person-plus-fill"></i> Manage Members</a>
+                                    <a href="@Url.Action("attendance", "Attendance")" class="btn btn-action"><i class="bi bi-calendar-plus"></i> Mark Attendance</a>
+                                    <a href="@Url.Action("bill", "Bill")" class="btn btn-action"><i class="bi bi-receipt"></i> Generate Bills</a>
+                                    <a href="@Url.Action("dispute", "Dispute")" class="btn btn-action"><i class="bi bi-chat-left-text-fill"></i> View Disputes</a>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Today's Menu -->
+                    <!-- Menu -->
                     <div class="col-12 col-lg-4">
-                        <div class="card">
+                        <div class="card h-100">
                             <div class="card-header">
                                 <h5><i class="bi bi-cup-hot-fill me-2"></i>Today's Menu</h5>
-                                <span class="badge bg-success">Wednesday</span>
+                                <span class="badge bg-success" id="currentDayBadge">Loading...</span>
                             </div>
                             <div class="card-body">
-                                <ul class="menu-list">
-                                    <li><span class="menu-item">Chicken Biryani</span><span class="menu-price">Rs. 180</span></li>
-                                    <li><span class="menu-item">Raita</span><span class="menu-price">Rs. 30</span></li>
-                                    <li><span class="menu-item">Salad</span><span class="menu-price">Rs. 20</span></li>
-                                    <li><span class="menu-item">Tea / Water</span><span class="menu-price">Rs. 25</span></li>
+                                <ul class="menu-list" id="dashboardMenuList">
+                                    <li class="text-center text-muted">Loading menu...</li>
                                 </ul>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Recent Disputes -->
+                    <!-- Disputes -->
                     <div class="col-12 col-lg-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5><i class="bi bi-flag-fill me-2"></i>Recent Disputes</h5>
-                            </div>
+                        <div class="card h-100">
+                            <div class="card-header"><h5><i class="bi bi-flag-fill me-2"></i>Recent Disputes</h5></div>
                             <div class="card-body">
-                                <ul class="dispute-list">
-                                    <li>
-                                        <div class="dispute-info">
-                                            <strong>Ali Hassan</strong>
-                                            <small>Nov 25, 2025</small>
-                                        </div>
-                                        <span class="badge bg-warning">Pending</span>
-                                    </li>
-                                    <li>
-                                        <div class="dispute-info">
-                                            <strong>Sara Khan</strong>
-                                            <small>Nov 24, 2025</small>
-                                        </div>
-                                        <span class="badge bg-success">Resolved</span>
-                                    </li>
-                                    <li>
-                                        <div class="dispute-info">
-                                            <strong>Ahmed Raza</strong>
-                                            <small>Nov 23, 2025</small>
-                                        </div>
-                                        <span class="badge bg-danger">Rejected</span>
-                                    </li>
+                                <ul class="dispute-list" id="dashboardDisputeList">
+                                    <li class="text-center text-muted">Loading disputes...</li>
                                 </ul>
                             </div>
                         </div>
@@ -180,10 +125,33 @@
         </main>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Link to your JS file -->
-    <script src="~/js/Admindashboard.js"></script>
-   
+
+    <!-- 1. DEFINE DATA FIRST -->
+    <script>
+        window.dashboardData = {
+            stats: {
+                totalMembers: @Model.TotalMembers,
+                presentToday: @Model.PresentToday,
+                pendingDisputes: @Model.PendingDisputes,
+                pendingBills: @Model.PendingBillsAmount
+            },
+            menu: @Html.Raw(Json.Serialize(Model.TodaysMenu.Select(m => new
+            {
+                name = m.DishName,
+                price = m.Price
+            }))),
+            // FIX: Added null check (d.User?) to prevent crash
+            disputes: @Html.Raw(Json.Serialize(Model.RecentDisputes.Select(d => new
+            {
+                userName = d.User != null ? d.User.Name : "Unknown User",
+                date = d.RequestDate,
+                status = d.Status
+            })))
+        };
+    </script>
+
+    <!-- 2. LOAD JS SECOND -->
+    <script src="~/js/dashboard.js"></script>
 </body>
 </html>
