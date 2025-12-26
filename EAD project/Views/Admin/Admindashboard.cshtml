@@ -127,29 +127,31 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- 1. DEFINE DATA FIRST -->
     <script>
-        window.dashboardData = {
-            stats: {
-                totalMembers: @Model.TotalMembers,
-                presentToday: @Model.PresentToday,
-                pendingDisputes: @Model.PendingDisputes,
-                pendingBills: @Model.PendingBillsAmount
-            },
-            menu: @Html.Raw(Json.Serialize(Model.TodaysMenu.Select(m => new
+    window.dashboardData = {
+        // ... existing stats ...
+        stats: {
+            totalMembers: @Model.TotalMembers,
+            presentToday: @Model.PresentToday,
+            pendingDisputes: @Model.PendingDisputes,
+            pendingBills: @Model.PendingBillsAmount
+        },
+        // UPDATE THIS SECTION TO INCLUDE 'type'
+        menu: @Html.Raw(Json.Serialize(Model.TodaysMenu.Select(m => new
             {
                 name = m.DishName,
-                price = m.Price
+                price = m.Price,
+                type = m.MealType // Ensure TblMenu has a 'MealType' column (Lunch/Dinner)
             }))),
-            // FIX: Added null check (d.User?) to prevent crash
-            disputes: @Html.Raw(Json.Serialize(Model.RecentDisputes.Select(d => new
+        // ... existing disputes ...
+        disputes: @Html.Raw(Json.Serialize(Model.RecentDisputes.Select(d => new
             {
                 userName = d.User != null ? d.User.Name : "Unknown User",
                 date = d.RequestDate,
                 status = d.Status
             })))
-        };
-    </script>
+    };
+</script>
 
     <!-- 2. LOAD JS SECOND -->
     <script src="~/js/dashboard.js"></script>

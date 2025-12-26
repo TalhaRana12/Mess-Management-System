@@ -1,5 +1,5 @@
 ﻿document.addEventListener('DOMContentLoaded', function () {
-    // 1. Initialize Sidebar (Your requested code)
+    // 1. Initialize Sidebar
     initSidebar();
 
     // 2. Load Data
@@ -16,7 +16,6 @@ function initSidebar() {
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebar = document.querySelector('.sidebar');
 
-    // Check if elements exist to avoid errors
     if (sidebarToggle && sidebar) {
         sidebarToggle.addEventListener('click', () => {
             sidebar.classList.toggle('show');
@@ -37,7 +36,7 @@ function loadDashboardData(data) {
             billEl.textContent = `Rs. ${data.stats.pendingBills.toLocaleString()}`;
         }
 
-        // 2. Update Menu List
+        // 2. Update Menu List (Separated by Lunch and Dinner)
         const menuList = document.getElementById('dashboardMenuList');
         const dayBadge = document.getElementById('currentDayBadge');
 
@@ -47,12 +46,49 @@ function loadDashboardData(data) {
 
         if (menuList) {
             if (data.menu && data.menu.length > 0) {
-                menuList.innerHTML = data.menu.map(item => `
-                    <li>
-                        <span class="menu-item">${item.name}</span>
-                        <span class="menu-price">Rs. ${item.price}</span>
-                    </li>
-                `).join('');
+                // Filter items
+                const lunchItems = data.menu.filter(m => m.type === 'Lunch');
+                const dinnerItems = data.menu.filter(m => m.type === 'Dinner');
+
+                let htmlContent = '';
+
+                // Helper function to generate list HTML
+                const generateList = (items) => {
+                    return items.map(item => `
+                        <li>
+                            <span class="menu-item">${item.name}</span>
+                            <span class="menu-price">Rs. ${item.price}</span>
+                        </li>
+                    `).join('');
+                };
+
+                // Add Lunch Section
+                if (lunchItems.length > 0) {
+                    htmlContent += `
+                        <li class="bg-light fw-bold text-primary px-2 py-1 mt-2 rounded">
+                            <i class="bi bi-brightness-high-fill me-1"></i> Lunch
+                        </li>
+                        ${generateList(lunchItems)}
+                    `;
+                }
+
+                // Add Dinner Section
+                if (dinnerItems.length > 0) {
+                    htmlContent += `
+                        <li class="bg-light fw-bold text-primary px-2 py-1 mt-2 rounded">
+                            <i class="bi bi-moon-fill me-1"></i> Dinner
+                        </li>
+                        ${generateList(dinnerItems)}
+                    `;
+                }
+
+                // If items exist but don't match Lunch/Dinner exactly (Fallback)
+                if (lunchItems.length === 0 && dinnerItems.length === 0) {
+                    htmlContent = generateList(data.menu);
+                }
+
+                menuList.innerHTML = htmlContent;
+
             } else {
                 menuList.innerHTML = '<li class="text-center text-muted py-2">No menu available today</li>';
             }
@@ -66,7 +102,6 @@ function loadDashboardData(data) {
                 disputeList.innerHTML = data.disputes.map(d => {
                     const dateStr = new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-                    // Badge Colors
                     let badgeClass = 'bg-secondary';
                     if (d.status === 'Pending') badgeClass = 'bg-warning text-dark';
                     else if (d.status === 'Approved') badgeClass = 'bg-success';
