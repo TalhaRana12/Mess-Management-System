@@ -1,0 +1,457 @@
+﻿/* Import Dashboard Base Styles */
+@import url('Admindashboard.css');
+
+/* Body & General */
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f8f9fa;
+}
+
+/* Profile Card */
+.profile-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.profile-header {
+    background: linear-gradient(135deg, #198754, #20c997);
+    padding: 2rem;
+    text-align: center;
+    color: white;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+}
+
+    .profile-avatar i {
+        font-size: 3rem;
+        color: white;
+    }
+
+.profile-header h4 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.profile-username {
+    margin: 0.25rem 0 1rem;
+    opacity: 0.9;
+    font-size: 0.95rem;
+}
+
+.profile-header .badge {
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+}
+
+.profile-body {
+    padding: 1.5rem;
+}
+
+.profile-info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+    .profile-info-item:last-child {
+        border-bottom: none;
+    }
+
+    .profile-info-item i {
+        font-size: 1.25rem;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border-radius: 10px;
+        flex-shrink: 0;
+    }
+
+    .profile-info-item label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+
+    .profile-info-item p {
+        margin: 0;
+        font-weight: 500;
+        color: #212529;
+        font-size: 0.95rem;
+    }
+
+/* Card Styles */
+.card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.25rem 1.5rem;
+    border-radius: 16px 16px 0 0 !important;
+}
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #198754;
+        display: flex;
+        align-items: center;
+    }
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Password Info Banner */
+.password-info-banner {
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.1), rgba(32, 201, 151, 0.1));
+    border: 1px solid rgba(25, 135, 84, 0.2);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+    .password-info-banner i {
+        font-size: 1.5rem;
+        color: #198754;
+        flex-shrink: 0;
+    }
+
+    .password-info-banner strong {
+        color: #198754;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .password-info-banner p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+/* Password Form */
+.password-form .form-label {
+    font-weight: 600;
+    color: #212529;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.password-form .form-control {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+    .password-form .form-control:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15);
+    }
+
+    .password-form .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+
+.password-form .input-group .btn {
+    border: 2px solid #e0e0e0;
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    padding: 0.75rem 1rem;
+}
+
+    .password-form .input-group .btn:hover {
+        background: #f8f9fa;
+    }
+
+.password-form .input-group .form-control {
+    border-radius: 10px 0 0 10px;
+}
+
+/* Password Strength Indicator */
+.password-strength {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.strength-bar {
+    flex: 1;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.strength-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+    .strength-fill.weak {
+        width: 25%;
+        background: #dc3545;
+    }
+
+    .strength-fill.fair {
+        width: 50%;
+        background: #ffc107;
+    }
+
+    .strength-fill.good {
+        width: 75%;
+        background: #0dcaf0;
+    }
+
+    .strength-fill.strong {
+        width: 100%;
+        background: #198754;
+    }
+
+.strength-text {
+    font-size: 0.8rem;
+    color: #6c757d;
+    min-width: 100px;
+}
+
+    .strength-text.weak {
+        color: #dc3545;
+    }
+
+    .strength-text.fair {
+        color: #ffc107;
+    }
+
+    .strength-text.good {
+        color: #0dcaf0;
+    }
+
+    .strength-text.strong {
+        color: #198754;
+    }
+
+/* Password Requirements */
+.password-requirements {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.requirement {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+    .requirement i {
+        font-size: 0.75rem;
+    }
+
+    .requirement.valid {
+        color: #198754;
+    }
+
+        .requirement.valid i::before {
+            content: "\F26B";
+        }
+
+    .requirement.invalid {
+        color: #dc3545;
+    }
+
+        .requirement.invalid i::before {
+            content: "\F622";
+        }
+
+/* Password Match Indicator */
+.password-match {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Buttons */
+.btn-change-password {
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+    .btn-change-password:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+    }
+
+.btn-outline-secondary {
+    padding: 0.75rem 2rem;
+    font-weight: 500;
+    border-radius: 10px;
+}
+
+/* Security Tips */
+.security-tips {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.tip-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+    .tip-item:hover {
+        background: #e9ecef;
+    }
+
+    .tip-item i {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .tip-item strong {
+        display: block;
+        color: #212529;
+        margin-bottom: 0.25rem;
+    }
+
+    .tip-item p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+/* Success Modal */
+.success-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(25, 135, 84, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+    .success-icon i {
+        font-size: 3.5rem;
+    }
+
+#successModal .modal-content {
+    border: none;
+    border-radius: 16px;
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.toast {
+    min-width: 300px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toast-success {
+    background: #198754;
+    color: white;
+}
+
+.toast-error {
+    background: #dc3545;
+    color: white;
+}
+
+.toast-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+/* Responsive Design */
+@media (max-width: 991.98px) {
+    .profile-card {
+        margin-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .dashboard-content {
+        padding: 1rem;
+    }
+
+    .profile-header {
+        padding: 1.5rem;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+    }
+
+        .profile-avatar i {
+            font-size: 2.5rem;
+        }
+
+    .password-info-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .btn-change-password,
+    .btn-outline-secondary {
+        width: 100%;
+    }
+
+    .d-flex.gap-3 {
+        flex-direction: column;
+    }
+
+    .tip-item {
+        flex-direction: column;
+        text-align: center;
+    }
+}
