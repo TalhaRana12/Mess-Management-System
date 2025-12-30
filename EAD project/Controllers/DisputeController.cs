@@ -1,4 +1,5 @@
 ﻿using EAD_project.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -24,6 +25,7 @@ namespace EAD_project.Controllers
 
     public class DisputeController : Controller
     {
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpGet]
         public async Task<IActionResult> dispute()
         {
@@ -49,7 +51,7 @@ namespace EAD_project.Controllers
                 return View(viewModel);
             }
         }
-
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
         public async Task<IActionResult> ResolveDispute([FromBody] DisputeResolutionDto data)
         {

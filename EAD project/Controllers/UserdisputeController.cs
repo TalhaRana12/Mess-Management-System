@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EAD_project.Controllers
 {
@@ -17,6 +18,7 @@ namespace EAD_project.Controllers
 
     public class UserdisputeController : Controller
     {
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         public async Task<IActionResult> user_dispute()
         {
             // 1. Session Check

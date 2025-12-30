@@ -1,4 +1,5 @@
 ﻿using EAD_project.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 namespace EAD_project.Controllers
@@ -12,6 +13,7 @@ namespace EAD_project.Controllers
     }
     public class UserdashboardController : Controller
     {
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         public async Task<IActionResult> user_dashboard()
         {
             int? sessionUserId = HttpContext.Session.GetInt32("uet");

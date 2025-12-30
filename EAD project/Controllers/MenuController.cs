@@ -1,10 +1,12 @@
 ﻿using EAD_project.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 namespace EAD_project.Controllers
 {
     public class MenuController : Controller
     {
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         public async Task<IActionResult> menu()
         {
             List<TblMenu> temp;
@@ -15,6 +17,7 @@ namespace EAD_project.Controllers
 
             return View(temp);
         }
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
         public async Task<IActionResult> SaveMenu_api([FromBody] List<TblMenu> menuItems)
         {

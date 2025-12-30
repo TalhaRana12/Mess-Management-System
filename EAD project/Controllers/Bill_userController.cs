@@ -1,6 +1,7 @@
 ﻿using EAD_project.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,6 +30,7 @@ namespace EAD_project.Controllers
 
     public class Bill_userController : Controller
     {
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
         public async Task<IActionResult> PayBillApi([FromBody] PaymentRequestDto request)
         {
@@ -101,7 +103,7 @@ namespace EAD_project.Controllers
             }
         }
 
-
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         public async Task<IActionResult> user_bill()
         {
             // 1. Get User ID from Session

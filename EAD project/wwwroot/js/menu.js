@@ -252,3 +252,32 @@ document.getElementById('saveMenuBtn').addEventListener('click', async () => {
 document.getElementById('sidebarToggle')?.addEventListener('click', () => {
     document.querySelector('.sidebar').classList.toggle('show');
 });
+// Sidebar Toggle for Mobile
+const sidebarToggle = document.getElementById('sidebarToggle');
+const sidebar = document.querySelector('.sidebar');
+
+// Create overlay element
+const overlay = document.createElement('div');
+overlay.className = 'sidebar-overlay';
+document.body.appendChild(overlay);
+
+if (sidebarToggle) {
+    sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('show');
+        overlay.classList.toggle('show');
+    });
+}
+
+// Close sidebar when clicking overlay
+overlay.addEventListener('click', () => {
+    sidebar.classList.remove('show');
+    overlay.classList.remove('show');
+});
+
+// Close sidebar when window is resized to desktop
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 767.98) {
+        sidebar.classList.remove('show');
+        overlay.classList.remove('show');
+    }
+});

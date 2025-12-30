@@ -1,4 +1,5 @@
 ﻿using EAD_project.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,6 +7,7 @@ namespace EAD_project.Controllers
 {
     public class MembersController : Controller
     {
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpGet]
         public async Task<IActionResult> members()
         {
@@ -21,7 +23,7 @@ namespace EAD_project.Controllers
 
             return View(temp);
         }
-
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
         public async Task<IActionResult> update_api([FromBody] TblUser updatedUser)
         {
@@ -58,7 +60,7 @@ namespace EAD_project.Controllers
             return Ok("Member updated successfully.");
         }
 
-
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
         public async Task<IActionResult> delete_api([FromBody] int userId)
         {

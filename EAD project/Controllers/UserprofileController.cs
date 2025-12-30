@@ -1,4 +1,5 @@
 ﻿using EAD_project.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace EAD_project.Controllers
     public class UserprofileController : Controller
     {
         // GET: Show Profile Page
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         public async Task<IActionResult> user_profile()
         {
             // 1. Check Session
@@ -34,7 +36,7 @@ namespace EAD_project.Controllers
                 return View(user); // Pass the TblUser model to the view
             }
         }
-
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         // API: Change Password
         [HttpPost]
         public async Task<IActionResult> UpdatePassword([FromBody] ChangePasswordDto request)

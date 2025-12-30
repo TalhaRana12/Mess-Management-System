@@ -1,7 +1,7 @@
 ﻿using EAD_project.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.AspNetCore.Authorization;
 namespace EAD_project.Controllers
 {
     public class ViewModel
@@ -12,8 +12,7 @@ namespace EAD_project.Controllers
     }
     public class BillController : Controller
     {
-       
-
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         public async Task<IActionResult> bill()
         {
             using (MessManagmentContext mydb = new MessManagmentContext())
@@ -46,6 +45,7 @@ namespace EAD_project.Controllers
                 return View(viewModel);
             }
         }
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
         public async Task<IActionResult> SaveBillsApi([FromBody] List<TblBill> billList)
         {

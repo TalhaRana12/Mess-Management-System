@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EAD_project.Controllers
 {
@@ -20,6 +21,7 @@ namespace EAD_project.Controllers
 
     public class AdminController : Controller
     {
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpGet]
         public async Task<IActionResult> Admindashboard()
         {

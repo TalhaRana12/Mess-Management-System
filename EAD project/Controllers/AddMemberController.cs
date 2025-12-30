@@ -1,4 +1,5 @@
 ﻿using EAD_project.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,11 +8,13 @@ namespace EAD_project.Controllers
 {
     public class AddMemberController : Controller
     {
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpGet]
         public IActionResult addmember()
         {
             return View();
         }
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
         public async Task<IActionResult> adduser_api([FromBody] TblUser data)
         {

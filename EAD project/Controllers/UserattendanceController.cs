@@ -13,6 +13,7 @@ namespace EAD_project.Controllers
     }
     public class UserattendanceController : Controller
     {
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpGet]
         public async Task<IActionResult> user_attendance()
         {
@@ -61,7 +62,7 @@ namespace EAD_project.Controllers
             public int AttendanceId { get; set; }
             public int UserId { get; set; }
         }
-
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
         public async Task<IActionResult> verify_request_api([FromBody] VerificationRequestModel requestData)
         {

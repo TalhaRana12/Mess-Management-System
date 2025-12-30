@@ -1,4 +1,5 @@
 ﻿using EAD_project.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +13,7 @@ namespace EAD_project.Controllers
             public List<TblUser> user;
             public List<TblAttendance> attendances;
         }
-
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         public async Task<IActionResult> attendance()
         {
             using (MessManagmentContext mydb = new MessManagmentContext())
@@ -39,7 +40,7 @@ namespace EAD_project.Controllers
                 return View(viewModel);
             }
         }
-
+        [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
         public async Task<IActionResult> save_api([FromBody] List<TblAttendance> attendanceList)
         {

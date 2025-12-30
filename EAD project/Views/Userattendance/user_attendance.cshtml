@@ -32,11 +32,11 @@
                 <a href="@Url.Action("user_attendance","Userattendance")" class="nav-link active"><i class="bi bi-calendar-check-fill"></i> My Attendance</a>
                 <a href="@Url.Action("user_menu","Usermenu")" class="nav-link"><i class="bi bi-journal-text"></i> Menu</a>
                 <a href="@Url.Action("user_bill","Bill_user")" class="nav-link"><i class="bi bi-receipt"></i> My Bills</a>
-                <a href="#" class="nav-link"><i class="bi bi-exclamation-triangle-fill"></i> My Disputes</a>
-                <a href="#" class="nav-link"><i class="bi bi-person-circle"></i> Profile</a>
+                <a href="@Url.Action("user_dispute", "Userdispute")" class="nav-link"><i class="bi bi-exclamation-triangle-fill"></i> My Disputes</a>
+                <a href="@Url.Action("user_profile", "Userprofile")" class="nav-link"><i class="bi bi-person-circle"></i> Profile</a>
             </nav>
             <div class="sidebar-footer">
-                <a href="login.html" class="nav-link"><i class="bi bi-box-arrow-left"></i> Logout</a>
+                <a href="@Url.Action("logout", "Logout")" class="nav-link"><i class="bi bi-box-arrow-left"></i> Logout</a>
             </div>
         </aside>
 
