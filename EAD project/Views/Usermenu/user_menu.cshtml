@@ -1,7 +1,4 @@
 ﻿@{
-	Layout = null;
-}
-@{
     Layout = null;
 }
 
@@ -14,12 +11,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Ensure this path is correct -->
     <link rel="stylesheet" href="~/css/usermenu.css">
 </head>
 <body>
 
     <div class="dashboard-wrapper">
-        <aside class="sidebar">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h3><i class="bi bi-egg-fried me-2"></i>MessHub</h3>
             </div>
@@ -36,11 +35,10 @@
             </div>
         </aside>
 
-        <!-- Sidebar Overlay for Mobile -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
+        <!-- Main Content -->
         <main class="main-content">
             <header class="top-navbar">
+                <!-- Toggle Button with ID -->
                 <button class="btn sidebar-toggle d-lg-none" id="sidebarToggle">
                     <i class="bi bi-list"></i>
                 </button>
@@ -54,6 +52,7 @@
             </header>
 
             <div class="dashboard-content">
+                <!-- Banner -->
                 <div class="today-highlight" id="todayHighlight">
                     <div class="today-badge">
                         <i class="bi bi-star-fill"></i> Today's Menu
@@ -64,234 +63,66 @@
                     </div>
                 </div>
 
+                <!-- Menu Grid -->
                 <div class="menu-grid">
-                    <!-- Monday -->
-                    <div class="menu-card" data-day="monday">
-                        <div class="menu-card-header">
-                            <div class="day-info">
-                                <h5>Monday</h5>
-                                <span class="date-label">Dec 1</span>
-                            </div>
-                        </div>
-                        <div class="menu-card-body">
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-brightness-high-fill"></i> Lunch</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="monday-lunch"></tbody>
-                                    <tfoot><tr><td><strong>Lunch Total</strong></td><td><strong id="monday-lunch-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-moon-fill"></i> Dinner</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="monday-dinner"></tbody>
-                                    <tfoot><tr><td><strong>Dinner Total</strong></td><td><strong id="monday-dinner-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="menu-card-footer">
-                            <span class="total-label">Day Total:</span>
-                            <span class="total-price" id="monday-total">Rs. 0</span>
-                        </div>
-                    </div>
+                    <!-- Cards are rendered via JS, but structure must match IDs in JS -->
+                    @* Helper function to render card structure to avoid clutter *@
+                    @functions {
+                        void RenderCard(string day, string label, string date, bool special = false)
+                        {
+                            string cssClass = special ? "menu-card special-day" : "menu-card";
+                            string dayLower = day.ToLower();
 
-                    <!-- Tuesday -->
-                    <div class="menu-card" data-day="tuesday">
-                        <div class="menu-card-header">
-                            <div class="day-info">
-                                <h5>Tuesday</h5>
-                                <span class="date-label">Dec 2</span>
-                            </div>
-                        </div>
-                        <div class="menu-card-body">
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-brightness-high-fill"></i> Lunch</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="tuesday-lunch"></tbody>
-                                    <tfoot><tr><td><strong>Lunch Total</strong></td><td><strong id="tuesday-lunch-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-moon-fill"></i> Dinner</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="tuesday-dinner"></tbody>
-                                    <tfoot><tr><td><strong>Dinner Total</strong></td><td><strong id="tuesday-dinner-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="menu-card-footer">
-                            <span class="total-label">Day Total:</span>
-                            <span class="total-price" id="tuesday-total">Rs. 0</span>
-                        </div>
-                    </div>
+                                    <div class="@cssClass" data-day="@dayLower">
+                                @if (special)
+                                {
+                                    <div class="special-badge"><i class="bi bi-star-fill"></i> Special</div>
+                                }
+                                        <div class="menu-card-header">
+                                            <div class="day-info">
+                                                <h5>@day</h5>
+                                                <span class="date-label">@date</span>
+                                            </div>
+                                        </div>
+                                        <div class="menu-card-body">
+                                            <div class="meal-section">
+                                                <div class="meal-header"><i class="bi bi-brightness-high-fill"></i> Lunch</div>
+                                                <table class="menu-table">
+                                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
+                                                    <tbody id="@dayLower-lunch"></tbody>
+                                                    <tfoot><tr><td>Total</td><td><strong id="@dayLower-lunch-total">Rs. 0</strong></td></tr></tfoot>
+                                                </table>
+                                            </div>
+                                            <div class="meal-section">
+                                                <div class="meal-header"><i class="bi bi-moon-fill"></i> Dinner</div>
+                                                <table class="menu-table">
+                                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
+                                                    <tbody id="@dayLower-dinner"></tbody>
+                                                    <tfoot><tr><td>Total</td><td><strong id="@dayLower-dinner-total">Rs. 0</strong></td></tr></tfoot>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="menu-card-footer">
+                                            <span class="total-label">Day Total:</span>
+                                            <span class="total-price" id="@dayLower-total">Rs. 0</span>
+                                        </div>
+                                    </div>
+                        }
+                    }
 
-                    <!-- Wednesday -->
-                    <div class="menu-card" data-day="wednesday">
-                        <div class="menu-card-header">
-                            <div class="day-info">
-                                <h5>Wednesday</h5>
-                                <span class="date-label">Dec 3</span>
-                            </div>
-                        </div>
-                        <div class="menu-card-body">
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-brightness-high-fill"></i> Lunch</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="wednesday-lunch"></tbody>
-                                    <tfoot><tr><td><strong>Lunch Total</strong></td><td><strong id="wednesday-lunch-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-moon-fill"></i> Dinner</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="wednesday-dinner"></tbody>
-                                    <tfoot><tr><td><strong>Dinner Total</strong></td><td><strong id="wednesday-dinner-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="menu-card-footer">
-                            <span class="total-label">Day Total:</span>
-                            <span class="total-price" id="wednesday-total">Rs. 0</span>
-                        </div>
-                    </div>
-
-                    <!-- Thursday -->
-                    <div class="menu-card" data-day="thursday">
-                        <div class="menu-card-header">
-                            <div class="day-info">
-                                <h5>Thursday</h5>
-                                <span class="date-label">Dec 4</span>
-                            </div>
-                        </div>
-                        <div class="menu-card-body">
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-brightness-high-fill"></i> Lunch</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="thursday-lunch"></tbody>
-                                    <tfoot><tr><td><strong>Lunch Total</strong></td><td><strong id="thursday-lunch-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-moon-fill"></i> Dinner</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="thursday-dinner"></tbody>
-                                    <tfoot><tr><td><strong>Dinner Total</strong></td><td><strong id="thursday-dinner-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="menu-card-footer">
-                            <span class="total-label">Day Total:</span>
-                            <span class="total-price" id="thursday-total">Rs. 0</span>
-                        </div>
-                    </div>
-
-                    <!-- Friday -->
-                    <div class="menu-card special-day" data-day="friday">
-                        <div class="special-badge"><i class="bi bi-star-fill"></i> Special</div>
-                        <div class="menu-card-header">
-                            <div class="day-info">
-                                <h5>Friday</h5>
-                                <span class="date-label">Dec 5</span>
-                            </div>
-                        </div>
-                        <div class="menu-card-body">
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-brightness-high-fill"></i> Lunch</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="friday-lunch"></tbody>
-                                    <tfoot><tr><td><strong>Lunch Total</strong></td><td><strong id="friday-lunch-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-moon-fill"></i> Dinner</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="friday-dinner"></tbody>
-                                    <tfoot><tr><td><strong>Dinner Total</strong></td><td><strong id="friday-dinner-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="menu-card-footer">
-                            <span class="total-label">Day Total:</span>
-                            <span class="total-price" id="friday-total">Rs. 0</span>
-                        </div>
-                    </div>
-
-                    <!-- Saturday -->
-                    <div class="menu-card" data-day="saturday">
-                        <div class="menu-card-header">
-                            <div class="day-info">
-                                <h5>Saturday</h5>
-                                <span class="date-label">Dec 6</span>
-                            </div>
-                        </div>
-                        <div class="menu-card-body">
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-brightness-high-fill"></i> Lunch</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="saturday-lunch"></tbody>
-                                    <tfoot><tr><td><strong>Lunch Total</strong></td><td><strong id="saturday-lunch-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-moon-fill"></i> Dinner</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="saturday-dinner"></tbody>
-                                    <tfoot><tr><td><strong>Dinner Total</strong></td><td><strong id="saturday-dinner-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="menu-card-footer">
-                            <span class="total-label">Day Total:</span>
-                            <span class="total-price" id="saturday-total">Rs. 0</span>
-                        </div>
-                    </div>
-
-                    <!-- Sunday -->
-                    <div class="menu-card" data-day="sunday">
-                        <div class="menu-card-header">
-                            <div class="day-info">
-                                <h5>Sunday</h5>
-                                <span class="date-label">Nov 30</span>
-                            </div>
-                        </div>
-                        <div class="menu-card-body">
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-brightness-high-fill"></i> Lunch</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="sunday-lunch"></tbody>
-                                    <tfoot><tr><td><strong>Lunch Total</strong></td><td><strong id="sunday-lunch-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                            <div class="meal-section">
-                                <div class="meal-header"><i class="bi bi-moon-fill"></i> Dinner</div>
-                                <table class="menu-table">
-                                    <thead><tr><th>Item</th><th>Price</th></tr></thead>
-                                    <tbody id="sunday-dinner"></tbody>
-                                    <tfoot><tr><td><strong>Dinner Total</strong></td><td><strong id="sunday-dinner-total">Rs. 0</strong></td></tr></tfoot>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="menu-card-footer">
-                            <span class="total-label">Day Total:</span>
-                            <span class="total-price" id="sunday-total">Rs. 0</span>
-                        </div>
-                    </div>
+                    <!-- Render Days -->
+                    @{
+                        RenderCard("Monday", "Monday", "Dec 1");
+                        RenderCard("Tuesday", "Tuesday", "Dec 2");
+                        RenderCard("Wednesday", "Wednesday", "Dec 3");
+                        RenderCard("Thursday", "Thursday", "Dec 4");
+                        RenderCard("Friday", "Friday", "Dec 5", true);
+                        RenderCard("Saturday", "Saturday", "Dec 6");
+                        RenderCard("Sunday", "Sunday", "Dec 7");
+                    }
                 </div>
 
-                <!-- Weekly Summary -->
+                <!-- Summary -->
                 <div class="weekly-summary">
                     <div class="summary-card">
                         <div class="summary-icon"><i class="bi bi-currency-rupee"></i></div>
@@ -319,9 +150,13 @@
         </main>
     </div>
 
+    <!-- MOVED OVERLAY HERE (Outside wrapper, direct child of body) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let menu=@Html.Raw(Json.Serialize(Model));
+        // Pass model to JS safely
+        let menu = @Html.Raw(Json.Serialize(Model));
     </script>
     <script src="~/js/usermenu.js"></script>
 </body>

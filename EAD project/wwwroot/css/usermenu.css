@@ -9,12 +9,17 @@ body, html {
     overflow-x: hidden;
 }
 
+/* Wrapper */
 .dashboard-wrapper {
     display: flex;
     min-height: 100vh;
+    position: relative; /* Establish context */
+/*    z-index: 1;*/
 }
 
-/* Sidebar */
+/* ============================
+   SIDEBAR STYLES
+   ============================ */
 .sidebar {
     width: 260px;
     background: #ffffff;
@@ -23,7 +28,9 @@ body, html {
     flex-direction: column;
     position: fixed;
     height: 100vh;
-    z-index: 100;
+    top: 0;
+    left: 0;
+    z-index: 1050; /* High z-index to sit on top */
     transition: transform 0.3s ease;
 }
 
@@ -78,20 +85,43 @@ body, html {
         padding: 0.5rem;
     }
 
-        .sidebar-footer .nav-link i {
-            margin-right: 10px;
-        }
-
         .sidebar-footer .nav-link:hover {
             color: #dc3545;
         }
 
-/* Main Content */
+/* ============================
+   OVERLAY STYLES (CRITICAL FIX)
+   ============================ */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040; /* Below sidebar (1000), above content */
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.3s ease;
+    /* FIX FOR MOBILE TOUCH */
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+    .sidebar-overlay.show {
+        visibility: visible;
+        opacity: 1;
+    }
+
+/* ============================
+   MAIN CONTENT
+   ============================ */
 .main-content {
     flex: 1;
     margin-left: 260px;
     background: #f8f9fa;
     min-height: 100vh;
+    width: 100%;
 }
 
 /* Top Navbar */
@@ -104,7 +134,7 @@ body, html {
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     position: sticky;
     top: 0;
-    z-index: 50;
+    z-index: 500;
 }
 
 .page-title {
@@ -132,6 +162,9 @@ body, html {
 .sidebar-toggle {
     font-size: 1.5rem;
     color: #212529;
+    border: none;
+    background: none;
+    cursor: pointer;
 }
 
 /* Dashboard Content */
@@ -139,31 +172,7 @@ body, html {
     padding: 1.5rem;
 }
 
-/* Week Navigation */
-.week-navigation {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    background: #ffffff;
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-}
-
-.current-week {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #212529;
-    display: flex;
-    align-items: center;
-}
-
-    .current-week i {
-        color: #198754;
-    }
-
-/* Today's Highlight */
+/* Today's Highlight Banner */
 .today-highlight {
     background: linear-gradient(135deg, #198754, #20c997);
     color: white;
@@ -183,10 +192,6 @@ body, html {
     font-weight: 600;
     font-size: 0.9rem;
 }
-
-    .today-badge i {
-        color: #ffc107;
-    }
 
 .today-content h4 {
     margin: 0;
@@ -222,28 +227,13 @@ body, html {
         box-shadow: 0 8px 25px rgba(0,0,0,0.12);
     }
 
-    /* Today's Card Styling */
     .menu-card.today {
         border: 3px solid #198754;
     }
 
-.today-marker {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #198754;
-    color: white;
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    z-index: 10;
-}
-
-/* Special Day Styling */
-.menu-card.special-day {
-    border: 3px solid #ffc107;
-}
+    .menu-card.special-day {
+        border: 3px solid #ffc107;
+    }
 
 .special-badge {
     position: absolute;
@@ -258,7 +248,6 @@ body, html {
     z-index: 10;
 }
 
-/* Menu Card Header */
 .menu-card-header {
     background: linear-gradient(135deg, #f8f9fa, #e9ecef);
     padding: 1rem 1.25rem;
@@ -280,26 +269,6 @@ body, html {
     color: #6c757d;
 }
 
-.btn-edit-menu {
-    width: 35px;
-    height: 35px;
-    border-radius: 8px;
-    border: none;
-    background: rgba(25, 135, 84, 0.15);
-    color: #198754;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-    .btn-edit-menu:hover {
-        background: #198754;
-        color: white;
-    }
-
-/* Menu Card Body */
 .menu-card-body {
     padding: 1rem 1.25rem;
 }
@@ -324,38 +293,6 @@ body, html {
     gap: 0.5rem;
 }
 
-    .meal-header i {
-        font-size: 0.9rem;
-    }
-
-.meal-items {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-    .meal-items li {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.4rem 0;
-        border-bottom: 1px dashed #e0e0e0;
-        font-size: 0.9rem;
-    }
-
-        .meal-items li:last-child {
-            border-bottom: none;
-        }
-
-.item-name {
-    color: #212529;
-}
-
-.item-price {
-    color: #198754;
-    font-weight: 600;
-}
-
-/* Menu Card Footer */
 .menu-card-footer {
     background: #f8f9fa;
     padding: 0.75rem 1.25rem;
@@ -363,11 +300,6 @@ body, html {
     justify-content: space-between;
     align-items: center;
     border-top: 1px solid #e0e0e0;
-}
-
-.total-label {
-    font-size: 0.85rem;
-    color: #6c757d;
 }
 
 .total-price {
@@ -384,51 +316,21 @@ body, html {
     margin-top: 0.5rem;
 }
 
-    .menu-table thead tr {
-        background: #f8f9fa;
+    .menu-table th, .menu-table td {
+        padding: 0.5rem;
+        border-bottom: 1px dashed #e0e0e0;
     }
 
     .menu-table th {
-        padding: 0.5rem;
         text-align: left;
-        font-weight: 600;
         color: #6c757d;
         border-bottom: 2px solid #e0e0e0;
     }
 
-        .menu-table th:last-child {
-            text-align: right;
-            width: 80px;
-        }
-
-    .menu-table tbody tr {
-        border-bottom: 1px dashed #e0e0e0;
-    }
-
-    .menu-table tbody td {
-        padding: 0.5rem;
-        color: #212529;
-    }
-
-        .menu-table tbody td:last-child {
-            text-align: right;
-            color: #198754;
-            font-weight: 500;
-        }
-
-    .menu-table tfoot tr {
-        background: linear-gradient(135deg, rgba(25, 135, 84, 0.1), rgba(32, 201, 151, 0.1));
-    }
-
     .menu-table tfoot td {
-        padding: 0.5rem;
         border-top: 2px solid #198754;
+        color: #198754;
     }
-
-        .menu-table tfoot td:last-child {
-            text-align: right;
-            color: #198754;
-        }
 
 /* Weekly Summary */
 .weekly-summary {
@@ -463,176 +365,11 @@ body, html {
     margin: 0;
     font-size: 1.3rem;
     font-weight: 700;
-    color: #212529;
 }
 
-.summary-info p {
-    margin: 0;
-    color: #6c757d;
-    font-size: 0.85rem;
-}
-
-/* Modal Styles */
-.modal {
-    z-index: 1055;
-}
-
-.modal-dialog {
-    max-width: 750px;
-    margin: 1.75rem auto;
-}
-
-.modal-content {
-    border: none;
-    border-radius: 16px;
-    max-height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.modal-header {
-    border-bottom: 1px solid #e0e0e0;
-    padding: 1.25rem 1.5rem;
-    flex-shrink: 0;
-}
-
-.modal-title {
-    font-weight: 600;
-    color: #198754;
-}
-
-.modal-body {
-    padding: 1.5rem;
-    overflow-y: auto;
-    overflow-x: hidden;
-    max-height: 65vh;
-    flex: 1;
-}
-
-.modal-footer {
-    border-top: 1px solid #e0e0e0;
-    padding: 1rem 1.5rem;
-    flex-shrink: 0;
-}
-
-/* Meal Edit Section */
-.meal-edit-section {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-}
-
-    .meal-edit-section h6 {
-        color: #198754;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #198754;
-    }
-
-.menu-item-row {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-    align-items: center;
-    flex-wrap: nowrap;
-}
-
-    .menu-item-row input {
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.9rem;
-        transition: all 0.3s ease;
-        min-width: 0;
-    }
-
-        .menu-item-row input:focus {
-            border-color: #198754;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1);
-        }
-
-        .menu-item-row input[name="dishName"] {
-            flex: 2;
-            min-width: 150px;
-        }
-
-        .menu-item-row input[name="price"] {
-            flex: 1;
-            max-width: 100px;
-            min-width: 80px;
-        }
-
-/* Compulsory Label Styling */
-.compulsory-label {
-    background: linear-gradient(135deg, #198754, #20c997);
-    color: white;
-    padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.btn-remove-item {
-    width: 35px;
-    height: 35px;
-    min-width: 35px;
-    border-radius: 8px;
-    border: none;
-    background: rgba(220, 53, 69, 0.15);
-    color: #dc3545;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-    .btn-remove-item:hover:not(:disabled) {
-        background: #dc3545;
-        color: white;
-    }
-
-    .btn-remove-item:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-.btn-add-item {
-    width: 100%;
-    padding: 0.5rem;
-    border: 2px dashed #198754;
-    background: transparent;
-    color: #198754;
-    border-radius: 8px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-    .btn-add-item:hover {
-        background: rgba(25, 135, 84, 0.1);
-    }
-
-/* Toast Notification */
-.custom-toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 20px;
-    border-radius: 10px;
-    color: white;
-    font-weight: 500;
-    z-index: 9999;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-/* Responsive */
+/* ============================
+   RESPONSIVE QUERIES
+   ============================ */
 @media (max-width: 991.98px) {
     .sidebar {
         transform: translateX(-100%);
@@ -644,11 +381,6 @@ body, html {
 
     .main-content {
         margin-left: 0;
-    }
-
-    .week-navigation {
-        flex-direction: column;
-        gap: 1rem;
     }
 }
 
@@ -668,9 +400,5 @@ body, html {
     .today-highlight {
         flex-direction: column;
         text-align: center;
-    }
-
-    .weekly-summary {
-        grid-template-columns: 1fr;
     }
 }

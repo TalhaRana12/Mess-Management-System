@@ -589,3 +589,154 @@ body, html {
         height: 30px;
     }
 }
+
+/* Responsive Design */
+@media (max-width: 991.98px) {
+    .date-selection-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .date-control {
+        justify-content: center;
+    }
+
+    .date-actions {
+        justify-content: center;
+    }
+
+    .meal-type-selection {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .dashboard-content {
+        padding: 1rem;
+    }
+
+    .date-selection-bar {
+        padding: 1rem;
+    }
+
+    .date-control {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .date-input {
+        width: 100%;
+    }
+
+    .date-actions {
+        width: 100%;
+    }
+
+        .date-actions .btn {
+            flex: 1;
+        }
+
+    .selected-info-bar {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .info-item {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .mini-stat-card {
+        padding: 0.75rem;
+    }
+
+    .mini-stat-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+
+    .mini-stat-info h4 {
+        font-size: 1.2rem;
+    }
+
+    .attendance-table {
+        font-size: 0.8rem;
+    }
+
+        .attendance-table thead th,
+        .attendance-table tbody td {
+            padding: 0.75rem 0.5rem;
+        }
+
+    .member-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 0.8rem;
+    }
+
+    .member-name {
+        font-size: 0.85rem;
+    }
+
+    .member-username {
+        font-size: 0.75rem;
+    }
+
+    .search-box-inline input {
+        min-width: 150px;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+        .header-actions .form-select {
+            width: 100%;
+        }
+}
+
+@media (max-width: 576px) {
+    .attendance-table thead th:nth-child(4),
+    .attendance-table tbody td:nth-child(4) {
+        display: none;
+    }
+
+    .checkbox-header span {
+        font-size: 0.8rem;
+    }
+
+    .checkbox-header small {
+        font-size: 0.7rem;
+    }
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.toast {
+    min-width: 300px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.toast-success {
+    background: #198754;
+    color: white;
+}
+
+.toast-error {
+    background: #dc3545;
+    color: white;
+}
+
+.toast-warning {
+    background: #ffc107;
+    color: #212529;
+}

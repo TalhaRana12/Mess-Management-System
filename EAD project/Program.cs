@@ -27,7 +27,7 @@ builder.Services.AddAuthentication("JwtAuth")
             OnChallenge = context =>
             {
                 context.HandleResponse();
-                context.Response.Redirect("/Login/loginpage");
+                context.Response.Redirect("/Login/login");
                 return Task.CompletedTask;
             }
         };
