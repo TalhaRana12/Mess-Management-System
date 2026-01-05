@@ -2,27 +2,35 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization; // Required for [JsonPropertyName]
 
 namespace EAD_project.Controllers
 {
     public class MembersController : Controller
     {
+        private readonly MessManagmentContext _db;
+
+        public MembersController(MessManagmentContext db)
+        {
+            _db = db;
+        }
+
+        // --- HELPER CLASS FOR DELETE REQUEST ---
+        // This ensures the JSON { "id": 5 } maps correctly to this C# property
+        public class MemberIdRequest
+        {
+            [JsonPropertyName("id")]
+            public int Id { get; set; }
+        }
+
         [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpGet]
         public async Task<IActionResult> members()
         {
-            List<TblUser> temp;
-
-            using (MessManagmentContext mydb = new MessManagmentContext())
-            {
-                // Use await and ToListAsync() to unblock the thread while fetching data
-                temp = await mydb.TblUsers.ToListAsync();
-            }
-
-
-
+            var temp = await _db.TblUsers.ToListAsync();
             return View(temp);
         }
+
         [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
         public async Task<IActionResult> update_api([FromBody] TblUser updatedUser)
@@ -30,57 +38,59 @@ namespace EAD_project.Controllers
             if (updatedUser == null || updatedUser.UserId == 0)
                 return BadRequest("Invalid data received.");
 
-            using (MessManagmentContext mydb = new MessManagmentContext())
+            var existingUser = await _db.TblUsers.FirstOrDefaultAsync(u => u.UserId == updatedUser.UserId);
+            if (existingUser == null)
+                return NotFound("User not found.");
+
+            // Check for duplicate username (excluding self)
+            bool usernameExists = await _db.TblUsers.AnyAsync(u => u.Username == updatedUser.Username && u.UserId != updatedUser.UserId);
+            if (usernameExists)
+                return Conflict("Username already exists.");
+
+            // Update fields
+            existingUser.Name = updatedUser.Name;
+            existingUser.Cnic = updatedUser.Cnic;
+            existingUser.Department = updatedUser.Department;
+            existingUser.Username = updatedUser.Username;
+            existingUser.IsActive = updatedUser.IsActive;
+
+            // Only update password if a new one is provided
+            if (!string.IsNullOrWhiteSpace(updatedUser.PasswordHash))
             {
-                // Find existing user by primary key
-                var existingUser = await mydb.TblUsers
-                    .FirstOrDefaultAsync(u => u.UserId == updatedUser.UserId);
-
-                if (existingUser == null)
-                    return NotFound("User not found.");
-
-                // Check duplicate username (except for this user)
-                bool usernameExists = await mydb.TblUsers
-                    .AnyAsync(u => u.Username == updatedUser.Username && u.UserId != updatedUser.UserId);
-
-                if (usernameExists)
-                    return Conflict("Username already exists.");
-
-                // Update fields
-                existingUser.Name = updatedUser.Name;
                 existingUser.PasswordHash = updatedUser.PasswordHash;
-                existingUser.Cnic = updatedUser.Cnic;
-                existingUser.Department = updatedUser.Department;
-                existingUser.Username = updatedUser.Username;
-                existingUser.IsActive = updatedUser.IsActive;
-
-                await mydb.SaveChangesAsync();
             }
 
+            await _db.SaveChangesAsync();
             return Ok("Member updated successfully.");
         }
 
         [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
-        public async Task<IActionResult> delete_api([FromBody] int userId)
+        public async Task<IActionResult> delete_api([FromBody] MemberIdRequest request)
         {
-            if (userId <= 0)
-                return BadRequest("Invalid user ID");
-
-            using (MessManagmentContext mydb = new MessManagmentContext())
+            try
             {
-                var user = await mydb.TblUsers.FirstOrDefaultAsync(x => x.UserId == userId);
+                // Validation: Check if request is null or ID is 0
+                if (request == null || request.Id <= 0)
+                    return BadRequest("Invalid user ID received.");
 
+                var user = await _db.TblUsers.FirstOrDefaultAsync(x => x.UserId == request.Id);
                 if (user == null)
-                    return NotFound("User not found");
+                    return NotFound("User not found.");
 
-                mydb.TblUsers.Remove(user);
-                await mydb.SaveChangesAsync();
+                // --- SOFT DELETE IMPLEMENTATION ---
+                // We do not remove the row from the database. 
+                // We mark it as Inactive to preserve bill/attendance history.
+                user.IsActive = false;
+
+                await _db.SaveChangesAsync();
+                return Ok("User deactivated successfully");
             }
-
-            return Ok("User deleted successfully");
+            catch (Exception ex)
+            {
+                // Return actual error for debugging
+                return BadRequest($"Server Error: {ex.Message}");
+            }
         }
-
-
     }
 }

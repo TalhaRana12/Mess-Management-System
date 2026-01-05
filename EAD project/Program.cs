@@ -1,5 +1,7 @@
 using EAD_project;
+using EAD_project.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -21,7 +23,6 @@ builder.Services.AddAuthentication("JwtAuth")
             IssuerSigningKey = new SymmetricSecurityKey(key)
         };
 
-
         options.Events = new JwtBearerEvents
         {
             OnChallenge = context =>
@@ -35,14 +36,26 @@ builder.Services.AddAuthentication("JwtAuth")
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddSession();
+
+// Session is used in LoginController, so configure it properly.
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(180);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// EF Core DbContext (Database First) - MUST use hosted DB connection string.
+builder.Services.AddDbContext<MessManagmentContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -50,6 +63,10 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Session must be before endpoints (and before you access HttpContext.Session).
+app.UseSession();
+
 app.UseMiddleware<jwtcoki>();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -57,5 +74,5 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Login}/{action=login}/{id?}");
-app.UseSession();
+
 app.Run();

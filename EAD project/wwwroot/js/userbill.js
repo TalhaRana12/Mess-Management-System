@@ -22,9 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize UI
     setTxt('userName', currentUser.name);
-    loadCurrentBill();
-    loadBillHistory();
-    calculatePaymentSummary();
+    // Note: loadCurrentBill and loadBillHistory are called inside processBackendData now
+    // to ensure the dropdown is ready first.
 
     // Sidebar Toggle Logic
     const toggle = getEl('sidebarToggle'), sidebar = document.querySelector('.sidebar'), overlay = getEl('sidebarOverlay');
@@ -37,7 +36,6 @@ const processBackendData = () => {
     // Set User
     if (window.messData.users && window.messData.users.length > 0) {
         const u = window.messData.users[0];
-        // IMPORTANT: Ensure ID is integer for API calls
         currentUser = { name: u.name, id: u.userId, dept: u.department };
     }
 
@@ -49,10 +47,9 @@ const processBackendData = () => {
             const uniqueDays = new Set(billAttendances.map(a => a.dateStr)).size;
             const totalMeals = billAttendances.filter(a => a.food).length;
 
-            // Calculate Mess Fee logic
             const calculatedTotal = b.totalFoodAmount + b.totalTeaWaterAmount;
             let messFee = b.grandTotal - calculatedTotal;
-            if (messFee < 0) messFee = 0; // Prevent negative if data mismatch
+            if (messFee < 0) messFee = 0;
 
             return {
                 id: b.billId,
@@ -61,7 +58,7 @@ const processBackendData = () => {
                 year: b.year,
                 amount: b.grandTotal,
                 status: b.isPaid ? 'paid' : 'unpaid',
-                generatedDate: `${b.year}-${String(b.month).padStart(2, '0')}-01`, // Approx date
+                generatedDate: `${b.year}-${String(b.month).padStart(2, '0')}-01`,
                 paidDate: b.isPaid ? new Date().toISOString() : null,
                 daysPresent: uniqueDays,
                 meals: totalMeals,
@@ -76,6 +73,41 @@ const processBackendData = () => {
         // Sort bills: Newest first
         billsData.sort((a, b) => new Date(b.generatedDate) - new Date(a.generatedDate));
     }
+
+    // --- NEW FIX: Auto-populate Years (2025, 2026, etc.) ---
+    populateYearDropdown();
+
+    // Now Load UI
+    loadCurrentBill();
+    loadBillHistory();
+    calculatePaymentSummary();
+};
+
+// --- NEW FUNCTION: Dynamically create Year Options ---
+const populateYearDropdown = () => {
+    const yearSelect = getEl('yearFilter');
+    if (!yearSelect) return;
+
+    // 1. Get years from data
+    const years = new Set(billsData.map(b => b.year));
+
+    // 2. Always add Current Year (e.g., 2026) so it appears even if no bills exist yet
+    const currentYear = new Date().getFullYear();
+    years.add(currentYear);
+
+    // 3. Sort Descending
+    const sortedYears = Array.from(years).sort((a, b) => b - a);
+
+    // 4. Build HTML
+    let html = '<option value="all">All Years</option>';
+    sortedYears.forEach(yr => {
+        html += `<option value="${yr}">${yr}</option>`;
+    });
+
+    yearSelect.innerHTML = html;
+
+    // 5. Default Select: Current Year (if exists in list)
+    yearSelect.value = currentYear;
 };
 
 // Helper: Filter real attendance data for a specific month/year
@@ -94,6 +126,7 @@ const getAttendanceForPeriod = (month, year) => {
 
 // 3. UI Logic Functions
 const loadCurrentBill = () => {
+    // Show the latest bill regardless of year
     const cur = billsData.length > 0 ? billsData[0] : null;
 
     if (cur) {
@@ -113,6 +146,8 @@ const loadCurrentBill = () => {
 const loadBillHistory = () => {
     const sFilter = getVal('statusFilter');
     const yFilterVal = getVal('yearFilter');
+
+    // Fix: Handle 'all' string vs integer year
     const yFilter = yFilterVal === 'all' ? 'all' : parseInt(yFilterVal);
 
     const filtered = billsData.filter(b =>
@@ -121,7 +156,7 @@ const loadBillHistory = () => {
     );
 
     const grid = getEl('billsGrid');
-    if (!filtered.length) return grid.innerHTML = `<div class="col-12 text-center py-5"><i class="bi bi-inbox fs-1 text-muted"></i><p class="text-muted mt-3">No bills found</p></div>`;
+    if (!filtered.length) return grid.innerHTML = `<div class="col-12 text-center py-5"><i class="bi bi-inbox fs-1 text-muted"></i><p class="text-muted mt-3">No bills found for this filter</p></div>`;
 
     grid.innerHTML = filtered.map(b => {
         const isPaid = b.status === 'paid';
@@ -150,7 +185,11 @@ const loadBillHistory = () => {
     }).join('');
 };
 
-const filterBills = () => { loadBillHistory(); calculatePaymentSummary(); };
+// Called when dropdown changes
+const filterBills = () => {
+    loadBillHistory();
+    calculatePaymentSummary();
+};
 
 const viewBillDetail = (id) => {
     const bill = id === 'current' ? billsData[0] : billsData.find(b => b.id === id);
@@ -293,7 +332,6 @@ const processPayment = async () => {
 };
 
 const showConfirmation = (details, method, transactionId) => {
-    // Prevent Multiple Overlays
     if (getEl('confOverlay')) getEl('confOverlay').remove();
 
     const div = document.createElement('div');
@@ -311,7 +349,6 @@ const showConfirmation = (details, method, transactionId) => {
     document.body.appendChild(div);
     setTimeout(() => div.classList.add('show'), 10);
 
-    // Attach Async Listener
     getEl('confirmPayBtn').onclick = () => finalizePaymentApi(details, method, transactionId);
 };
 
@@ -345,16 +382,14 @@ const finalizePaymentApi = async (details, method, transactionId) => {
             state.payBill.status = 'paid';
             state.payBill.paidDate = new Date().toISOString();
 
-            // Update local data array
             const billIndex = billsData.findIndex(b => b.id === state.payBill.id);
             if (billIndex > -1) {
                 billsData[billIndex].status = 'paid';
                 billsData[billIndex].paidDate = state.payBill.paidDate;
             }
 
-            // Refresh UI
             loadCurrentBill();
-            loadBillHistory();
+            loadBillHistory(); // This will re-render using the correct filters
             calculatePaymentSummary();
             showToast('Payment Successful!', 'success');
         } else {
@@ -380,16 +415,13 @@ const downloadBill = (id) => {
         const doc = new jsPDF();
         const attData = getAttendanceForPeriod(bill.monthInt, bill.year).sort((a, b) => a.dateObj - b.dateObj);
 
-        // Header
         doc.setFillColor(25, 135, 84).rect(0, 0, 210, 35, 'F');
         doc.setFontSize(24).setTextColor(255).setFont('helvetica', 'bold').text('MessHub', 15, 15);
         doc.setFontSize(10).setFont('helvetica', 'normal').text('Bill ID: #BILL-' + String(bill.id).padStart(4, '0'), 150, 12);
 
-        // Info
         doc.setTextColor(0).setFontSize(12).setFont('helvetica', 'bold').text('Bill To: ' + currentUser.name, 15, 50);
         doc.setFontSize(10).setFont('helvetica', 'normal').text(`Month: ${bill.month}`, 15, 57);
 
-        // Table
         doc.autoTable({
             startY: 65, head: [['Date', 'Type', 'Tea', 'Food', 'Price']],
             body: attData.map(a => [
@@ -402,7 +434,6 @@ const downloadBill = (id) => {
             theme: 'grid', headStyles: { fillColor: [25, 135, 84] }
         });
 
-        // Summary
         let y = doc.lastAutoTable.finalY + 10;
         if (y > 270) { doc.addPage(); y = 20; }
 
@@ -428,9 +459,12 @@ const downloadBill = (id) => {
 };
 
 const calculatePaymentSummary = () => {
+    // UPDATED: Dynamically get year filter
     const yrVal = getVal('yearFilter');
     const yr = yrVal === 'all' ? new Date().getFullYear() : parseInt(yrVal);
-    const b = billsData.filter(x => x.year === yr);
+
+    // Filter logic matches `loadBillHistory` now
+    const b = billsData.filter(x => yrVal === 'all' || x.year === yr);
 
     const totals = b.reduce((acc, x) => {
         acc.total += x.amount;
@@ -458,7 +492,6 @@ const showToast = (msg, type = 'info') => {
     setTimeout(() => { t.style.animation = 'slideOut 0.3s forwards'; setTimeout(() => t.remove(), 300); }, 3000);
 };
 
-// CSS Injection for Toast Animation
 const style = document.createElement('style');
 style.textContent = `@keyframes slideOut { to { transform: translateX(400px); opacity: 0; } }`;
 document.head.appendChild(style);

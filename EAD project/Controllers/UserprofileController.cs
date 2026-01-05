@@ -15,6 +15,13 @@ namespace EAD_project.Controllers
 
     public class UserprofileController : Controller
     {
+        private readonly MessManagmentContext _db;
+
+        public UserprofileController(MessManagmentContext db)
+        {
+            _db = db;
+        }
+
         // GET: Show Profile Page
         [Authorize(AuthenticationSchemes = "JwtAuth")]
         public async Task<IActionResult> user_profile()
@@ -26,16 +33,14 @@ namespace EAD_project.Controllers
                 return RedirectToAction("login", "Login");
             }
 
-            using (MessManagmentContext mydb = new MessManagmentContext())
-            {
-                // 2. Fetch User Data
-                var user = await mydb.TblUsers.FindAsync(sessionUserId);
+            // 2. Fetch User Data
+            var user = await _db.TblUsers.FindAsync(sessionUserId);
 
-                if (user == null) return RedirectToAction("login", "Login");
+            if (user == null) return RedirectToAction("login", "Login");
 
-                return View(user); // Pass the TblUser model to the view
-            }
+            return View(user); // Pass the TblUser model to the view
         }
+
         [Authorize(AuthenticationSchemes = "JwtAuth")]
         // API: Change Password
         [HttpPost]
@@ -46,27 +51,23 @@ namespace EAD_project.Controllers
 
             try
             {
-                using (MessManagmentContext mydb = new MessManagmentContext())
+                var user = await _db.TblUsers.FindAsync(sessionUserId);
+
+                if (user == null) return NotFound("User not found.");
+
+                // 1. Verify Current Password
+                // Note: In a real app, verify the Hash. Here we compare strings based on your schema.
+                if (user.PasswordHash != request.CurrentPassword)
                 {
-                    var user = await mydb.TblUsers.FindAsync(sessionUserId);
-
-                    if (user == null) return NotFound("User not found.");
-
-                    // 1. Verify Current Password
-                    // Note: In a real app, verify the Hash. Here we compare strings based on your schema.
-                    if (user.PasswordHash != request.CurrentPassword)
-                    {
-                        return BadRequest("Incorrect current password.");
-                    }
-
-                    // 2. Update Password
-                    user.PasswordHash = request.NewPassword;
-
-                    mydb.TblUsers.Update(user);
-                    await mydb.SaveChangesAsync();
-
-                    return Ok(new { success = true, message = "Password updated successfully." });
+                    return BadRequest("Incorrect current password.");
                 }
+
+                // 2. Update Password
+                user.PasswordHash = request.NewPassword;
+
+                await _db.SaveChangesAsync();
+
+                return Ok(new { success = true, message = "Password updated successfully." });
             }
             catch
             {

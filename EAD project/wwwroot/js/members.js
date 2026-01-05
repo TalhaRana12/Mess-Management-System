@@ -1,8 +1,6 @@
 ﻿// membersData is passed from Razor view
 // <script>const membersData = @Html.Raw(Json.Serialize(Model));</script>
 
-//console.log(membersData); // check structure
-
 // DOM Elements
 const searchInput = document.getElementById('searchInput');
 const clearSearchBtn = document.getElementById('clearSearch');
@@ -16,7 +14,6 @@ const sidebarToggle = document.getElementById('sidebarToggle');
 const totalMembersEl = document.getElementById('totalMembers');
 const activeMembersEl = document.getElementById('activeMembers');
 const inactiveMembersEl = document.getElementById('inactiveMembers');
-//const newThisMonthEl = document.getElementById('newThisMonth');
 const totalDepartmentsEl = document.getElementById('totalDepartments');
 
 // Modal Elements
@@ -52,10 +49,14 @@ function loadMembers(filteredData = null) {
 
         data.forEach((member, index) => {
             const statusText = member.isActive ? 'Active' : 'Inactive';
-            //const initials = member.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-            const initials = member.name.replace(/\s+/g, '').substring(0, 2).toUpperCase();
+            // Safe initial generation
+            const nameStr = member.name || "Unknown";
+            const initials = nameStr.replace(/\s+/g, '').substring(0, 2).toUpperCase();
 
             const row = document.createElement('tr');
+            // Add opacity style if inactive
+            if (!member.isActive) row.style.opacity = '0.6';
+
             row.innerHTML = `
                 <td>${index + 1}</td>
                 <td>
@@ -83,7 +84,7 @@ function loadMembers(filteredData = null) {
                         <button class="btn-edit" onclick="editMember(${member.userId})" title="Edit">
                             <i class="bi bi-pencil-fill"></i>
                         </button>
-                        <button class="btn-delete" onclick="deleteMember(${member.userId})" title="Delete">
+                        <button class="btn-delete" onclick="deleteMember(${member.userId})" title="Delete/Deactivate">
                             <i class="bi bi-trash-fill"></i>
                         </button>
                     </div>
@@ -91,7 +92,7 @@ function loadMembers(filteredData = null) {
             `;
             membersTableBody.appendChild(row);
         });
-    }, 300);
+    }, 200);
 }
 
 // Update Stats
@@ -104,7 +105,6 @@ function updateStats() {
     totalMembersEl.textContent = total;
     activeMembersEl.textContent = active;
     inactiveMembersEl.textContent = inactive;
-    //newThisMonthEl.textContent = Math.floor(Math.random() * 5) + 1; // random demo
     totalDepartmentsEl.textContent = uniqueDepartments;
 }
 
@@ -135,9 +135,9 @@ function filterMembers() {
 
     if (searchQuery) {
         filtered = filtered.filter(member =>
-            member.username.toLowerCase().includes(searchQuery) ||
-            member.name.toLowerCase().includes(searchQuery) ||
-            member.cnic.includes(searchQuery)
+            (member.username && member.username.toLowerCase().includes(searchQuery)) ||
+            (member.name && member.name.toLowerCase().includes(searchQuery)) ||
+            (member.cnic && member.cnic.includes(searchQuery))
         );
     }
 
@@ -159,7 +159,7 @@ function viewMember(id) {
     document.getElementById('viewMemberPassword').textContent = member.passwordHash;
     document.getElementById('viewMemberCnic').textContent = member.cnic;
     document.getElementById('viewMemberDepartment').textContent = member.department;
-    document.getElementById('viewMemberRole').textContent = member.role || '';
+    document.getElementById('viewMemberRole').textContent = member.role || 'Member';
 
     const statusEl = document.getElementById('viewMemberStatus');
     statusEl.textContent = member.isActive ? 'Active' : 'Inactive';
@@ -176,119 +176,29 @@ document.getElementById('editFromViewBtn').addEventListener('click', function ()
 });
 
 // Edit Member
-//function editMember(id) {
-//    const member = membersData.find(m => m.userId === id);
-//    if (!member) return;
-
-//    document.getElementById('editMemberId').value = member.userId;
-//    document.getElementById('editEmail').value = member.name;
-//    document.getElementById('editCnic').value = member.cnic;
-//    document.getElementById('editDepartment').value = member.department;
-//    document.getElementById('editUsername').value = member.username;
-//    //document.getElementById('editRole').value = member.role || '';
-//    document.getElementById('editStatus').value = member.isActive; // true/false
-
-//    currentMemberId = id;
-//    editMemberModal.show();
-//}
-
 function editMember(id) {
     const member = membersData.find(m => m.userId === id);
     if (!member) return;
 
     document.getElementById('editMemberId').value = member.userId;
     document.getElementById('editEmail').value = member.name;
-    document.getElementById('editPassword').value = member.passwordHash;// <-- corrected
+    document.getElementById('editPassword').value = member.passwordHash;
     document.getElementById('editCnic').value = member.cnic;
     document.getElementById('editDepartment').value = member.department;
     document.getElementById('editUsername').value = member.username;
-   // document.getElementById('editRole').value = member.role;
     document.getElementById('editStatus').value = member.isActive ? 'Active' : 'Inactive';
-
 
     currentMemberId = id;
     editMemberModal.show();
 }
 
 // Save Edit
-//document.getElementById('saveEditBtn').addEventListener('click', function () {
-//    const id = parseInt(document.getElementById('editMemberId').value);
-//    const memberIndex = membersData.findIndex(m => m.userId === id);
-//    if (memberIndex === -1) return;
-
-    //membersData[memberIndex] = {
-    //    ...membersData[memberIndex],
-    //    name: document.getElementById('editName').value,
-    //    passwordHash: document.getElementById('editPassword').value,
-    //    cnic: document.getElementById('editCnic').value,
-    //    department: document.getElementById('editDepartment').value,
-    //    username: document.getElementById('editUsername').value,
-    //    role: document.getElementById('editRole').value,
-    //    isActive: document.getElementById('editStatus').value === 'true'
-    //};
-
-//    editMemberModal.hide();
-//    loadMembers();
-//    updateStats();
-//    showToast('Member updated successfully!', 'success');
-//});
-//document.getElementById('saveEditBtn').addEventListener('click', async function () {
-//    const id = parseInt(document.getElementById('editMemberId').value);
-//    const memberIndex = membersData.findIndex(m => m.userId === id);
-//    if (memberIndex === -1) return;
-
-//    // Create updated object to send to backend
-//    const updatedMember = {
-//        UserId: id,
-//        name: document.getElementById('editEmail').value.trim(),
-//        passwordHash: document.getElementById('editPassword').value.trim(),
-//        cnic: document.getElementById('editCnic').value.trim(),
-//        department: document.getElementById('editDepartment').value,
-//        Username: document.getElementById('editUsername').value.trim(),
-//        isActive: document.getElementById('editStatus').value === 'true'
-//    };
-
-//    try {
-//        // Call backend API
-//        const response = await fetch('/Members/update_api', {
-//            method: 'POST',
-//            headers: {
-//                'Content-Type': 'application/json'
-//            },
-//            body: JSON.stringify(updatedMember)
-//        });
-
-//        if (!response.ok) {
-//            throw new Error(await response.text());
-//        }
-
-//        // If backend success → update frontend list also
-//        membersData[memberIndex] = {
-//            ...membersData[memberIndex],
-//            name: document.getElementById('editEmail').value,
-//            passwordHash: document.getElementById('editPassword').value,
-//            cnic: document.getElementById('editCnic').value,
-//            department: document.getElementById('editDepartment').value,
-//            username: document.getElementById('editUsername').value,
-//            role: document.getElementById('editRole').value,
-//            isActive: document.getElementById('editStatus').value === 'true'
-//        };
-
-//        editMemberModal.hide();
-//        loadMembers();
-//        updateStats();
-//        showToast('Member updated successfully!', 'success');
-//    }
-//    catch (err) {
-//        showToast(err.message, 'error');
-//    }
-//});
 document.getElementById('saveEditBtn').addEventListener('click', async function () {
     const id = parseInt(document.getElementById('editMemberId').value);
     const memberIndex = membersData.findIndex(m => m.userId === id);
     if (memberIndex === -1) return;
 
-    // Create updated object to send to backend
+    // Create updated object matching C# TblUser
     const updatedMember = {
         UserId: id,
         Name: document.getElementById('editEmail').value.trim(),
@@ -296,11 +206,10 @@ document.getElementById('saveEditBtn').addEventListener('click', async function 
         Cnic: document.getElementById('editCnic').value.trim(),
         Department: document.getElementById('editDepartment').value,
         Username: document.getElementById('editUsername').value.trim(),
-        IsActive: document.getElementById('editStatus').value === 'Active' // FIX
+        IsActive: document.getElementById('editStatus').value === 'Active'
     };
 
     try {
-        // Call backend API
         const response = await fetch('/Members/update_api', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -311,7 +220,7 @@ document.getElementById('saveEditBtn').addEventListener('click', async function 
             throw new Error(await response.text());
         }
 
-        // Update local frontend array
+        // Update local array
         membersData[memberIndex] = {
             ...membersData[memberIndex],
             name: updatedMember.Name,
@@ -332,99 +241,62 @@ document.getElementById('saveEditBtn').addEventListener('click', async function 
     }
 });
 
-// Delete Member
+// Delete Member (Show Modal)
 function deleteMember(id) {
     const member = membersData.find(m => m.userId === id);
     if (!member) return;
 
-    document.getElementById('deleteMemberName').textContent = member.name;
-    document.getElementById('deleteMemberId').value = member.userId;
-
+    // Set Global Variable
     currentMemberId = id;
+
+    // UI Updates
+    document.getElementById('deleteMemberName').textContent = member.name;
+    document.getElementById('deleteMemberId').value = member.userId; // Visual only
+
+    const confirmMsg = document.querySelector('#deleteMemberModal .modal-body p');
+    if (confirmMsg) confirmMsg.textContent = "Are you sure you want to deactivate this member?";
+
     deleteMemberModal.show();
 }
 
-// Confirm Delete
-//document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
-//    const id = parseInt(document.getElementById('deleteMemberId').value);
-//    membersData = membersData.filter(m => m.userId !== id);
-//    try {
-//        // Call backend API
-//        const response = await fetch('/Members/update_api', {
-//            method: 'POST',
-//            headers: {
-//                'Content-Type': 'application/json'
-//            },
-//            body: JSON.stringify(updatedMember)
-//        });
-
-//        if (!response.ok) {
-//            throw new Error(await response.text());
-//        }
-//    }
-//    catch (err) {
-//        showToast(err.message, "error");
-//    }
-//    deleteMemberModal.hide();
-//    loadMembers();
-//    updateStats();
-//    showToast('Member deleted successfully!', 'success');
-//});
-//document.getElementById('confirmDeleteBtn').addEventListener('click', async function () {
-//    const id = parseInt(document.getElementById('deleteMemberId').value);
-
-//    try {
-//        const response = await fetch('/Members/delete_api', {
-//            method: 'POST',
-//            headers: { 'Content-Type': 'application/json' },
-//            body: JSON.stringify(id)
-//        });
-
-//        if (!response.ok) {
-//            throw new Error(await response.text());
-//        }
-
-//        // Remove locally
-//        membersData = membersData.filter(m => m.userId !== id);
-
-//        deleteMemberModal.hide();
-//        loadMembers();
-//        updateStats();
-
-//        showToast('Member deleted successfully!', 'success');
-
-//    } catch (err) {
-//        showToast("Error deleting member", "error");
-//    }
-//});
+// Confirm Delete (Updated Fix)
 document.getElementById('confirmDeleteBtn').addEventListener('click', async function () {
-    const id = parseInt(document.getElementById('deleteMemberId').value);
+
+    // 1. Validation
+    if (!currentMemberId || currentMemberId <= 0) {
+        showToast("Error: Invalid Member ID", "error");
+        return;
+    }
+
+    // 2. Prepare Payload (Match C# property [JsonPropertyName("id")])
+    const payload = { id: currentMemberId };
 
     try {
         const response = await fetch('/Members/delete_api', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(id)
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
             throw new Error(await response.text());
         }
 
-        // Remove member from local array
-        membersData = membersData.filter(m => m.userId !== id);
+        // 3. Soft Delete Locally (Mark inactive instead of removing)
+        const memberIndex = membersData.findIndex(m => m.userId === currentMemberId);
+        if (memberIndex !== -1) {
+            membersData[memberIndex].isActive = false;
+        }
 
-        // Hide modal first
         deleteMemberModal.hide();
-
-        // Reload table and stats
         loadMembers();
         updateStats();
 
-        showToast('Member deleted successfully!', 'success');
+        showToast('Member deactivated successfully!', 'success');
 
     } catch (err) {
-        showToast("Error deleting member: " + err.message, "error");
+        console.error(err);
+        showToast("Error: " + err.message, "error");
     }
 });
 
@@ -442,7 +314,7 @@ function showToast(message, type = 'info') {
     if (existingToast) existingToast.remove();
 
     const toast = document.createElement('div');
-    toast.className = 'custom-toast';
+    toast.className = `custom-toast ${type}`;
 
     let bgColor, icon;
     switch (type) {
@@ -467,7 +339,10 @@ function showToast(message, type = 'info') {
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
     `;
-    document.head.appendChild(style);
+    if (!document.getElementById('toastStyles')) {
+        style.id = 'toastStyles';
+        document.head.appendChild(style);
+    }
     document.body.appendChild(toast);
 
     setTimeout(() => {

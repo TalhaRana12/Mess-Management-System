@@ -28,8 +28,16 @@ public partial class MessManagmentContext : DbContext
     public virtual DbSet<TblUser> TblUsers { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=(localdb)\\ProjectModels;Initial Catalog=MessManagment;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
+    {
+        // IMPORTANT: No hardcoded connection string here.
+        // This DbContext must be configured via DI in Program.cs using the
+        // ConnectionStrings:DefaultConnection value from appsettings.json / environment.
+        if (!optionsBuilder.IsConfigured)
+        {
+            throw new InvalidOperationException(
+                "MessManagmentContext is not configured. Configure it in Program.cs using AddDbContext and a connection string.");
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

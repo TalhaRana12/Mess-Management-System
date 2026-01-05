@@ -21,43 +21,44 @@ namespace EAD_project.Controllers
 
     public class AdminController : Controller
     {
+        private readonly MessManagmentContext _db;
+
+        public AdminController(MessManagmentContext db)
+        {
+            _db = db;
+        }
+
         [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpGet]
         public async Task<IActionResult> Admindashboard()
         {
-            using (MessManagmentContext mydb = new MessManagmentContext())
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            string dayName = DateTime.Now.DayOfWeek.ToString();
+
+            int totalMembers = await _db.TblUsers.CountAsync(u => u.IsActive);
+            int presentToday = await _db.TblAttendances.CountAsync(a => a.AttendanceDate == today && (a.Food || a.TeaWater));
+            int pendingDisputes = await _db.TblRequests.CountAsync(r => r.Status == "Pending");
+            decimal pendingBills = await _db.TblBills.Where(b => !b.IsPaid).SumAsync(b => b.GrandTotal);
+
+            var todaysMenu = await _db.TblMenus.Where(m => m.DayOfWeek == dayName).ToListAsync();
+
+            var recentDisputes = await _db.TblRequests
+                .Include(r => r.User)
+                .OrderByDescending(r => r.RequestDate)
+                .Take(5)
+                .ToListAsync();
+
+            var viewModel = new DashboardViewModel
             {
-                var today = DateOnly.FromDateTime(DateTime.Now);
-                string dayName = DateTime.Now.DayOfWeek.ToString();
+                TotalMembers = totalMembers,
+                PresentToday = presentToday,
+                PendingDisputes = pendingDisputes,
+                PendingBillsAmount = pendingBills,
+                TodaysMenu = todaysMenu,
+                RecentDisputes = recentDisputes
+            };
 
-                // 1. Stats
-                int totalMembers = await mydb.TblUsers.CountAsync(u => u.IsActive);
-                int presentToday = await mydb.TblAttendances.CountAsync(a => a.AttendanceDate == today && (a.Food || a.TeaWater));
-                int pendingDisputes = await mydb.TblRequests.CountAsync(r => r.Status == "Pending");
-                decimal pendingBills = await mydb.TblBills.Where(b => !b.IsPaid).SumAsync(b => b.GrandTotal);
-
-                // 2. Menu
-                var todaysMenu = await mydb.TblMenus.Where(m => m.DayOfWeek == dayName).ToListAsync();
-
-                // 3. Recent Disputes (Include User is CRITICAL)
-                var recentDisputes = await mydb.TblRequests
-                                               .Include(r => r.User)
-                                               .OrderByDescending(r => r.RequestDate)
-                                               .Take(5)
-                                               .ToListAsync();
-
-                var viewModel = new DashboardViewModel
-                {
-                    TotalMembers = totalMembers,
-                    PresentToday = presentToday,
-                    PendingDisputes = pendingDisputes,
-                    PendingBillsAmount = pendingBills,
-                    TodaysMenu = todaysMenu,
-                    RecentDisputes = recentDisputes
-                };
-
-                return View(viewModel);
-            }
+            return View(viewModel);
         }
     }
 }

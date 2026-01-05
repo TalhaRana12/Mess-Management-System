@@ -7,14 +7,17 @@ namespace EAD_project.Controllers
 {
     public class UsermenuController : Controller
     {
+        private readonly MessManagmentContext _db;
+
+        public UsermenuController(MessManagmentContext db)
+        {
+            _db = db;
+        }
+
         [Authorize(AuthenticationSchemes = "JwtAuth")]
         public async Task<IActionResult> user_menu()
         {
-            List<TblMenu> menu;
-            using (MessManagmentContext mydb=new MessManagmentContext())
-            {
-                menu = await mydb.TblMenus.ToListAsync();
-            }
+            var menu = await _db.TblMenus.ToListAsync();
             return View(menu);
         }
     }

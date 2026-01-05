@@ -2,21 +2,25 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+
 namespace EAD_project.Controllers
 {
     public class MenuController : Controller
     {
+        private readonly MessManagmentContext _db;
+
+        public MenuController(MessManagmentContext db)
+        {
+            _db = db;
+        }
+
         [Authorize(AuthenticationSchemes = "JwtAuth")]
         public async Task<IActionResult> menu()
         {
-            List<TblMenu> temp;
-            using (MessManagmentContext mydb = new MessManagmentContext())
-            {
-                temp = await mydb.TblMenus.ToListAsync();
-            }
-
+            var temp = await _db.TblMenus.ToListAsync();
             return View(temp);
         }
+
         [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
         public async Task<IActionResult> SaveMenu_api([FromBody] List<TblMenu> menuItems)
@@ -26,22 +30,17 @@ namespace EAD_project.Controllers
 
             string day = menuItems.First().DayOfWeek;
 
-            using (MessManagmentContext mydb = new MessManagmentContext())
-            using (var transaction = await mydb.Database.BeginTransactionAsync())
+            await using (var transaction = await _db.Database.BeginTransactionAsync())
             {
                 try
                 {
-                    // 1️⃣ Delete existing menu for that day
-                    var existingMenu = mydb.TblMenus
-                        .Where(m => m.DayOfWeek == day);
+                    var existingMenu = _db.TblMenus.Where(m => m.DayOfWeek == day);
+                    _db.TblMenus.RemoveRange(existingMenu);
+                    await _db.SaveChangesAsync();
 
-                    mydb.TblMenus.RemoveRange(existingMenu);
-                    await mydb.SaveChangesAsync();
-
-                    // 2️⃣ Insert updated menu
                     foreach (var item in menuItems)
                     {
-                        mydb.TblMenus.Add(new TblMenu
+                        _db.TblMenus.Add(new TblMenu
                         {
                             DayOfWeek = item.DayOfWeek,
                             MealType = item.MealType,
@@ -51,9 +50,8 @@ namespace EAD_project.Controllers
                         });
                     }
 
-                    await mydb.SaveChangesAsync();
+                    await _db.SaveChangesAsync();
                     await transaction.CommitAsync();
-
                     return Ok("Menu updated successfully");
                 }
                 catch (Exception ex)
@@ -63,6 +61,5 @@ namespace EAD_project.Controllers
                 }
             }
         }
-
     }
 }

@@ -18,38 +18,38 @@ namespace EAD_project.Controllers
 
     public class UserdisputeController : Controller
     {
+        private readonly MessManagmentContext _db;
+
+        public UserdisputeController(MessManagmentContext db)
+        {
+            _db = db;
+        }
+
         [Authorize(AuthenticationSchemes = "JwtAuth")]
         public async Task<IActionResult> user_dispute()
         {
-            // 1. Session Check
             int? sessionUserId = HttpContext.Session.GetInt32("uet");
             if (sessionUserId == null)
-            {
                 return RedirectToAction("login", "Login");
-            }
+
             int currentUserId = sessionUserId.Value;
 
-            using (MessManagmentContext mydb = new MessManagmentContext())
+            var user = await _db.TblUsers.FindAsync(currentUserId);
+
+            var userRequests = await _db.TblRequests
+                .Include(r => r.Attendance)
+                .Where(r => r.UserId == currentUserId)
+                .OrderByDescending(r => r.RequestDate)
+                .ToListAsync();
+
+            var viewModel = new UserDisputeViewModel
             {
-                // 2. Fetch User Details (for display)
-                var user = await mydb.TblUsers.FindAsync(currentUserId);
+                Requests = userRequests,
+                UserName = user?.Name ?? "User",
+                UserId = currentUserId
+            };
 
-                // 3. Fetch ONLY this User's Requests (Pending, Approved, Rejected)
-                var userRequests = await mydb.TblRequests
-                                             .Include(r => r.Attendance) // Join with Attendance to get Meal Data
-                                             .Where(r => r.UserId == currentUserId)
-                                             .OrderByDescending(r => r.RequestDate)
-                                             .ToListAsync();
-
-                var viewModel = new UserDisputeViewModel
-                {
-                    Requests = userRequests,
-                    UserName = user?.Name ?? "User",
-                    UserId = currentUserId
-                };
-
-                return View(viewModel);
-            }
+            return View(viewModel);
         }
     }
 }

@@ -30,6 +30,13 @@ namespace EAD_project.Controllers
 
     public class Bill_userController : Controller
     {
+        private readonly MessManagmentContext _db;
+
+        public Bill_userController(MessManagmentContext db)
+        {
+            _db = db;
+        }
+
         [Authorize(AuthenticationSchemes = "JwtAuth")]
         [HttpPost]
         public async Task<IActionResult> PayBillApi([FromBody] PaymentRequestDto request)
@@ -49,48 +56,44 @@ namespace EAD_project.Controllers
 
             try
             {
-                using (MessManagmentContext mydb = new MessManagmentContext())
+                // 2. Find the Bill
+                var bill = await _db.TblBills
+                    .FirstOrDefaultAsync(b => b.BillId == request.BillId);
+
+                if (bill == null)
+                    return NotFound("Bill not found.");
+
+                if (bill.IsPaid)
+                    return BadRequest("This bill has already been paid.");
+
+                // 3. Update Bill Status
+                bill.IsPaid = true;
+
+                // 4. Create Payment Record
+                var payment = new TblPayment
                 {
-                    // 2. Find the Bill
-                    var bill = await mydb.TblBills
-                        .FirstOrDefaultAsync(b => b.BillId == request.BillId);
+                    BillId = request.BillId,
+                    UserId = request.UserId,
+                    AmountPaid = request.AmountPaid,
+                    PaymentMethod = request.PaymentMethod,
+                    TransactionId = request.TransactionId,
 
-                    if (bill == null)
-                        return NotFound("Bill not found.");
+                    // Must match DB CHECK constraint
+                    Status = "Success",
+                    PaidAt = DateTime.Now
+                };
 
-                    if (bill.IsPaid)
-                        return BadRequest("This bill has already been paid.");
+                await _db.TblPayments.AddAsync(payment);
 
-                    // 3. Update Bill Status
-                    bill.IsPaid = true;
-                    mydb.TblBills.Update(bill);
+                // 5. Save everything together
+                await _db.SaveChangesAsync();
 
-                    // 4. Create Payment Record
-                    var payment = new TblPayment
-                    {
-                        BillId = request.BillId,
-                        UserId = request.UserId,
-                        AmountPaid = request.AmountPaid,
-                        PaymentMethod = request.PaymentMethod,
-                        TransactionId = request.TransactionId,
-
-                        // Must match DB CHECK constraint
-                        Status = "Success",
-                        PaidAt = DateTime.Now
-                    };
-
-                    await mydb.TblPayments.AddAsync(payment);
-
-                    // 5. Save everything together
-                    await mydb.SaveChangesAsync();
-
-                    return Ok(new
-                    {
-                        success = true,
-                        message = "Payment processed successfully.",
-                        paidAt = payment.PaidAt
-                    });
-                }
+                return Ok(new
+                {
+                    success = true,
+                    message = "Payment processed successfully.",
+                    paidAt = payment.PaidAt
+                });
             }
             catch (DbUpdateException dbEx)
             {
@@ -114,38 +117,35 @@ namespace EAD_project.Controllers
             }
             int currentUserId = sessionUserId.Value;
 
-            using (MessManagmentContext mydb = new MessManagmentContext())
+            var viewModel = new ViewModelBill
             {
-                var viewModel = new ViewModelBill
-                {
-                    // 2. Fetch only the logged-in User
-                    User = await mydb.TblUsers
-                                     .Where(u => u.UserId == currentUserId)
-                                     .ToListAsync(),
+                // 2. Fetch only the logged-in User
+                User = await _db.TblUsers
+                                 .Where(u => u.UserId == currentUserId)
+                                 .ToListAsync(),
 
-                    // 3. Fetch only bills belonging to this user
-                    Bills = await mydb.TblBills
-                                     .Where(b => b.UserId == currentUserId)
-                                     .ToListAsync(),
+                // 3. Fetch only bills belonging to this user
+                Bills = await _db.TblBills
+                                 .Where(b => b.UserId == currentUserId)
+                                 .ToListAsync(),
 
-                    // 4. Fetch only attendance records for this user
-                    Attendances = await mydb.TblAttendances
-                        .Where(a => a.UserId == currentUserId)
-                        .Select(a => new TblAttendance
-                        {
-                            AttendanceId = a.AttendanceId,
-                            UserId = a.UserId,
-                            AttendanceDate = a.AttendanceDate,
-                            MealType = a.MealType,
-                            TeaWater = a.TeaWater,
-                            Food = a.Food,
-                            FoodPrice = a.FoodPrice
-                        })
-                        .ToListAsync()
-                };
+                // 4. Fetch only attendance records for this user
+                Attendances = await _db.TblAttendances
+                    .Where(a => a.UserId == currentUserId)
+                    .Select(a => new TblAttendance
+                    {
+                        AttendanceId = a.AttendanceId,
+                        UserId = a.UserId,
+                        AttendanceDate = a.AttendanceDate,
+                        MealType = a.MealType,
+                        TeaWater = a.TeaWater,
+                        Food = a.Food,
+                        FoodPrice = a.FoodPrice
+                    })
+                    .ToListAsync()
+            };
 
-                return View(viewModel);
-            }
+            return View(viewModel);
         }
     }
 }
